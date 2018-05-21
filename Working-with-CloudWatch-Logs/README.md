@@ -1,5 +1,7 @@
 # CloudFormation template for the "Working with CloudWatch Logs" learning activity
 
+CloudCraft: https://cloudcraft.cloudassessments.com/#/labs/details/d2cf6817-f0f3-4e92-b6f7-5211da4d9825
+
 To attach a role to the EC2 instance which allows the CloudWath agent to send logs, attach a managed policy using the `ManagedPolicyArns` attribute and the ARN for the `CloudWatchAgentServerPolicy`:
 
 ```json
