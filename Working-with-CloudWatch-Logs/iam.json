@@ -1,0 +1,20 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "es:*",
+                "cloudwatch:*",
+                "cloudtrail:*",
+                "route53:*",
+                "ec2:*",
+                "logs:*",
+                "iam:List*",
+                "iam:Get*"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
