@@ -10,9 +10,14 @@
                 "es:*",
                 "iam:Get*",
                 "iam:List*",
+                "iam:PassRole",
+                "iam:PutRolePolicy",
+                "kms:ListKeys",
+                "kms:ListAliases",
                 "logs:*",
                 "route53:*",
-                "s3:*"
+                "s3:*",
+                "sns:*"
             ],
             "Resource": "*"
         }
