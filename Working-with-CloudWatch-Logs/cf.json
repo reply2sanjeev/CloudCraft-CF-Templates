@@ -1,6 +1,6 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "Cloudformation template for the 'Working with CloudWatch Logs' learning activity",
+    "Description": "Cloudformation template for the 'Working with CloudWatch Logs' learning activity. This template attaches the CloudWatchAgentServerPolicy role to the EC2 instance so it can log to Cloudwatch.",
     "Mappings": {
         "SubnetConfig": {
             "VPC": {
@@ -15,8 +15,9 @@
         "StudentEC2InstanceRole": {
             "Type": "AWS::IAM::Role",
             "Properties": {
-                "Path": "/",
-                "ManagedPolicyArns": ["arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"],
+                "ManagedPolicyArns": [
+                    "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+                ],
                 "AssumeRolePolicyDocument": {
                     "Statement": [
                         {
@@ -31,13 +32,69 @@
                             }
                         }
                     ]
-                }   
+                }
+            }
+        },
+        "CloudTrailCloudWatchLogsRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "ec2.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        "CloudTrailCloudWatchLogsPolicy": {
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyName": "root",
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Sid": "AWSCloudTrailCreateLogStream20141101",
+                            "Effect": "Allow",
+                            "Action": [
+                                "logs:CreateLogStream"
+                            ],
+                            "Resource": [
+                                "arn:aws:logs:*"
+                            ]
+                        },
+                        {
+                            "Sid": "AWSCloudTrailPutLogEvents20141101",
+                            "Effect": "Allow",
+                            "Action": [
+                                "logs:PutLogEvents"
+                            ],
+                            "Resource": [
+                                "arn:aws:logs:*"
+                            ]
+                        }
+                    ]
+                },
+                "Roles": [
+                    {
+                        "Ref": "CloudTrailCloudWatchLogsRole"
+                    }
+                ]
             }
         },
         "IamInstanceProfile": {
             "Type": "AWS::IAM::InstanceProfile",
             "Properties": {
-                "Path": "/",
                 "Roles": [
                     {
                         "Ref": "StudentEC2InstanceRole"
@@ -363,6 +420,8 @@
                                 "yum -y install python35\n",
                                 "yum -y install wget\n",
                                 "yum -y install python35-pip\n",
+                                "yum -y install httpd\n",
+                                "service httpd start\n",
                                 "pip-3.5 install boto3 --upgrade\n"
                             ]
                         ]
