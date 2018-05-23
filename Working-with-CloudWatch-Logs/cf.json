@@ -47,6 +47,13 @@
                                 "Service": "cloudtrail.amazonaws.com"
                             },
                             "Action": "sts:AssumeRole"
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "vpc-flow-logs.amazonaws.com"
+                            },
+                            "Action": "sts:AssumeRole"
                         }
                     ]
                 }
