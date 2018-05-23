@@ -8,6 +8,7 @@
                 "cloudwatch:*",
                 "ec2:*",
                 "es:*",
+                "iam:CreateServiceLinkedRole",
                 "iam:Get*",
                 "iam:List*",
                 "iam:PassRole",
