@@ -1,6 +1,6 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "Cloudformation template for 'Using AWS Git Secrets' learning activity",
+    "Description": "Cloudformation template for 'Automatic Resource Remediation with AWS Config' learning activity",
     "Mappings": {
         "SubnetConfig": {
             "VPC": {
