@@ -203,9 +203,50 @@ Resources:
           DeviceIndex: '0'
           DeleteOnTermination: 'true'
           SubnetId: !Ref PublicSubnet1
+
+  ConfigRole:
+    Type: 'AWS::IAM::Role'
+    Description: 'Role for AWS Config'
+    Properties:
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSConfigRole'
+        - 'arn:aws:iam::aws:policy/AWSLambdaExecute'            
+        - 'arn:aws:iam::aws:policy/service-role/AWSConfigRulesExecutionRole' 
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: config.amazonaws.com
+            Action: 'sts:AssumeRole'
+  
+  ConfigPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: root
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'sns:Publish'               
+              - 's3:GetBucketAcl'
+              - 's3:PutObject*'             
+            Resource: '*'
+      Roles:
+        - !Ref ConfigRole
   
   LambdaRole:
     Type: 'AWS::IAM::Role'
+    Description: 'Role for AWS Lambda functions'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
 
   LambdaPolicy:
     Type: 'AWS::IAM::Policy'
@@ -216,21 +257,24 @@ Resources:
         Statement:
           - Effect: Allow
             Action:
+              - 'config:GetComplianceDetailsByConfigRule'
               - 'ec2:AuthorizeSecurityGroupIngress'
               - 'ec2:DescribeSecurityGroups'
               - 'ec2:RevokeSecurityGroupIngress'
-              - 's3:*'
+              - 's3:GetBucketAcl'
+              - 's3:PutBucketAcl'  
+              - 'sns:Publish'            
             Resource: '*'
-          - Sid: Stmt1485832788000
-            Effect: Allow
-            Action:
-              - 'sns:Publish'
-            Resource:
-              - !Join
-                  - ''
-                  - - 'arn:aws:sns:us-east-1:'
-                    - !Ref AWS::AccountId
-                    - ':config-rules-compliance'
+          # - Sid: Stmt1485832788000
+          #   Effect: Allow
+          #   Action:
+          #     - 'sns:Publish'
+          #   Resource:
+          #     - !Join
+          #         - ''
+          #         - - 'arn:aws:sns:us-east-1:'
+          #           - !Ref AWS::AccountId
+          #           - ':config-rules-compliance'
       Roles:
         - !Ref LambdaRole
 

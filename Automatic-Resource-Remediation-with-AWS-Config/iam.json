@@ -1,10 +1,33 @@
 {
     "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Action": "ec2:*",
-            "Resource": "*",
-            "Effect": "Allow"
-        }
-    ]
+    "Statement": [{
+        "Sid": "Stmt1430872797000",
+        "Effect": "Allow",
+        "Action": [
+            "cloudtrail:*",
+            "cloudwatch:*",
+            "config:*",
+            "ec2:*",
+            "events:*",
+            "iam:AttachRolePolicy",
+            "iam:CreatePolicy",
+            "iam:CreatePolicyVersion",            
+            "iam:CreateRole",
+            "iam:DeletePolicyVersion",                        
+            "iam:GetRolePolicy",
+            "iam:ListAttachedRolePolicies",
+            "iam:ListPolicies",
+            "iam:ListRoles",
+            "iam:ListRolePolicies",
+            "iam:PassRole",
+            "logs:*",
+            "s3:*",            
+            "sns:*",
+            "sts:AssumeRole",
+            "tag:*"
+        ],
+        "Resource": [
+            "*"
+        ]
+    }]
 }
