@@ -410,11 +410,14 @@
                     }
                 ]
             }
+        },
+        "MySNSTopic": {
+            "Type": "AWS::SNS::Topic"
         }
     },
     "Outputs": {
         "pubIpAddress1": {
-            "Description": "Public ip address of public instance",
+            "Description": "Public IP address of public instance",
             "Value": {
                 "Fn::GetAtt": [
                     "PublicInstance",
@@ -423,12 +426,18 @@
             }
         },
         "privIpAddress1": {
-            "Description": "Private ip address of public instance",
+            "Description": "Private IP address of public instance",
             "Value": {
                 "Fn::GetAtt": [
                     "PublicInstance",
                     "PrivateIp"
                 ]
+            }
+        },
+        "mySNSTopicTopicARN": {
+            "Description": "SNS topic ARN",
+            "Value": {
+                "Ref": "MySNSTopic"
             }
         }
     }

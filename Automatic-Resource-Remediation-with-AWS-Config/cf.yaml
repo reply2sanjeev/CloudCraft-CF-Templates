@@ -185,7 +185,7 @@ Resources:
     Type: 'AWS::EC2::Instance'
     Properties:
       InstanceType: t2.micro
-      ImageId: '%ami-43%'
+      ImageId: '%ami-43%' # ami-14c5486b
       UserData: !Base64 
         'Fn::Join':
           - ''
@@ -265,30 +265,26 @@ Resources:
               - 's3:PutBucketAcl'  
               - 'sns:Publish'            
             Resource: '*'
-          # - Sid: Stmt1485832788000
-          #   Effect: Allow
-          #   Action:
-          #     - 'sns:Publish'
-          #   Resource:
-          #     - !Join
-          #         - ''
-          #         - - 'arn:aws:sns:us-east-1:'
-          #           - !Ref AWS::AccountId
-          #           - ':config-rules-compliance'
       Roles:
         - !Ref LambdaRole
 
+  MySNSTopic:
+    Type: 'AWS::SNS::Topic'
 
 Outputs:
 
   pubIpAddress1:
-    Description: Public ip address of public instance
+    Description: Public IP address of public instance
     Value: !GetAtt 
       - PublicInstance
       - PublicIp
 
   privIpAddress1:
-    Description: Private ip address of public instance
+    Description: Private IP address of public instance
     Value: !GetAtt 
       - PublicInstance
       - PrivateIp
+  
+  mySNSTopicTopicARN:
+    Description: SNS topic ARN
+    Value: !Ref MySNSTopic
