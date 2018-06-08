@@ -11,18 +11,6 @@
                 "S3BucketName": {
                     "Ref": "CloudTrailBucket"
                 },
-                "CloudWatchLogsLogGroupArn": {
-                    "Fn::GetAtt": [
-                        "CloudTrailLogGroup",
-                        "Arn"
-                    ]
-                },
-                "CloudWatchLogsRoleArn": {
-                    "Fn::GetAtt": [
-                        "CloudTrailRole",
-                        "Arn"
-                    ]
-                },
                 "EventSelectors": [
                     {
                         "DataResources": [
@@ -30,7 +18,7 @@
                                 "Type": "AWS::S3::Object",
                                 "Values": [
                                     {
-                                        "Fn::Sub": "${S3BucketObjectLogging.Arn}/"
+                                        "Fn::Sub": "${ImagesBucket.Arn}/"
                                     }
                                 ]
                             }
@@ -82,13 +70,10 @@
                 ]
             }
         },
-        "CloudTrailLogGroup": {
-            "Type": "AWS::Logs::LogGroup"
-        },
-        "S3BucketObjectLogging": {
+        "ImagesBucket": {
             "Type": "AWS::S3::Bucket"
         },
-        "S3Bucket": {
+        "DocumentsBucket": {
             "Type": "AWS::S3::Bucket"
         },
         "CloudTrailBucket": {

@@ -1,13 +1,25 @@
 {
     "Version": "2012-10-17",
     "Statement": [{
-        "Sid": "Stmt1430872797000",
         "Effect": "Allow",
         "Action": [
             "cloudtrail:*",
             "cloudwatch:*",
             "logs:*",
+            "iam:PassRole",
+            "iam:ListRoles",
+            "iam:GetRolePolicy",
+            "iam:GetUser",
+            "iam:PutRolePolicy",
+            "kms:ListKeys",
+            "kms:ListAliases",
             "s3:*",
+            "sns:AddPermission",
+            "sns:CreateTopic",
+            "sns:DeleteTopic",
+            "sns:ListTopics",
+            "sns:SetTopicAttributes",
+            "sns:GetTopicAttributes",
             "sts:AssumeRole",
             "tag:*"
         ],

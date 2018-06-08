@@ -17,14 +17,16 @@ Resources:
       IsLogging: false
       IsMultiRegionTrail: false
       S3BucketName: !Ref CloudTrailBucket
-      CloudWatchLogsLogGroupArn: !GetAtt CloudTrailLogGroup.Arn
-      CloudWatchLogsRoleArn: !GetAtt CloudTrailRole.Arn
+      # Don't enable CW Logs integration by default. Let the student do it:
+      # CloudWatchLogsLogGroupArn: !GetAtt CloudTrailLogGroup.Arn
+      # CloudWatchLogsRoleArn: !GetAtt CloudTrailRole.Arn
       EventSelectors:
         - DataResources:
             - Type: AWS::S3::Object
               Values:
-                #- !GetAtt S3BucketObjectLogging.Arn
-                - !Sub "${S3BucketObjectLogging.Arn}/"
+                # The trailing slash below is necessary to construct the bucket
+                # prefix correctly. Do NOT use /* as that specifies objects.
+                - !Sub "${ImagesBucket.Arn}/"
           IncludeManagementEvents: true
           ReadWriteType: All  
     DependsOn:
@@ -57,16 +59,17 @@ Resources:
   #
   # CloudWatch
   #
-  CloudTrailLogGroup:
-    Type: AWS::Logs::LogGroup
+  # Let the student set this up too
+  #CloudTrailLogGroup:
+  #  Type: AWS::Logs::LogGroup
 
   #
   # S3
   #
-  S3BucketObjectLogging:
+  ImagesBucket:
     Type: AWS::S3::Bucket
 
-  S3Bucket:
+  DocumentsBucket:
     Type: AWS::S3::Bucket
 
   CloudTrailBucket:
