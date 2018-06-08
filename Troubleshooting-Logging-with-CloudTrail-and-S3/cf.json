@@ -1,6 +1,6 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "Cloudformation template for 'Troubleshooting Logging with CloudTrail and S3' learning activity",
+    "Description": "Cloudformation template for 'Troubleshooting Logging with CloudTrail and S3' learning activity (https://cloudcraft.cloudassessments.com/#/labs/details/ceadfbd9-9892-4ee6-922b-ccdcda286763?courseId=203)",
     "Resources": {
         "CloudTrail": {
             "Type": "AWS::CloudTrail::Trail",
@@ -30,7 +30,7 @@
                                 "Type": "AWS::S3::Object",
                                 "Values": [
                                     {
-                                        "Fn::Sub": "${S3BucketWithObjectLoggingOn.Arn}/*"
+                                        "Fn::Sub": "${S3BucketObjectLogging.Arn}/"
                                     }
                                 ]
                             }
@@ -85,10 +85,10 @@
         "CloudTrailLogGroup": {
             "Type": "AWS::Logs::LogGroup"
         },
-        "S3BucketWithObjectLoggingOn": {
+        "S3BucketObjectLogging": {
             "Type": "AWS::S3::Bucket"
         },
-        "S3Bucket2": {
+        "S3Bucket": {
             "Type": "AWS::S3::Bucket"
         },
         "CloudTrailBucket": {

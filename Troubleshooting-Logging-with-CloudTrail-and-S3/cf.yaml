@@ -1,6 +1,8 @@
 AWSTemplateFormatVersion: 2010-09-09
 
-Description: Cloudformation template for 'Troubleshooting Logging with CloudTrail and S3' learning activity
+Description: >- 
+  Cloudformation template for 'Troubleshooting Logging with CloudTrail and S3'
+  learning activity (https://cloudcraft.cloudassessments.com/#/labs/details/ceadfbd9-9892-4ee6-922b-ccdcda286763?courseId=203)
 
 
 Resources:
@@ -21,7 +23,8 @@ Resources:
         - DataResources:
             - Type: AWS::S3::Object
               Values:
-                - !Sub "${S3BucketWithObjectLoggingOn.Arn}/*"
+                #- !GetAtt S3BucketObjectLogging.Arn
+                - !Sub "${S3BucketObjectLogging.Arn}/"
           IncludeManagementEvents: true
           ReadWriteType: All  
     DependsOn:
@@ -60,10 +63,10 @@ Resources:
   #
   # S3
   #
-  S3BucketWithObjectLoggingOn:
+  S3BucketObjectLogging:
     Type: AWS::S3::Bucket
 
-  S3Bucket2:
+  S3Bucket:
     Type: AWS::S3::Bucket
 
   CloudTrailBucket:
@@ -78,12 +81,14 @@ Resources:
         Statement: 
           - Sid: AWSCloudTrailAclCheck
             Effect: Allow
-            Principal: { Service: cloudtrail.amazonaws.com }
+            Principal: 
+              Service: cloudtrail.amazonaws.com
             Action: s3:GetBucketAcl
             Resource: !GetAtt CloudTrailBucket.Arn
           - Sid: AWSCloudTrailWrite
             Effect: Allow
-            Principal: { Service: cloudtrail.amazonaws.com }
+            Principal: 
+              Service: cloudtrail.amazonaws.com
             Action: s3:PutObject
             Resource: !Sub "${CloudTrailBucket.Arn}/*" 
             Condition: # ensure we have control of objects written to the bucket
