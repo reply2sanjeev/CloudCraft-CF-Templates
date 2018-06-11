@@ -382,7 +382,7 @@
                             },
                             "/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
                                 "content": {
-                                    "Fn::Sub": "[cfn-auto-reloader-hook]\ntriggers=post.update\npath=Resources.WebServerHost.Metadata.AWS::CloudFormation::Init\naction=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WebServerHost --region ${AWS::Region}\n"
+                                    "Fn::Sub": "[cfn-auto-reloader-hook]\ntriggers=post.update\npath=Resources.WebServerInstance.Metadata.AWS::CloudFormation::Init\naction=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WebServerInstance --region ${AWS::Region}\n"
                                 },
                                 "mode": "000400",
                                 "owner": "root",
@@ -410,7 +410,7 @@
                 }
             },
             "Properties": {
-                "ImageId": "%ami-42%",
+                "ImageId": "%ami-43%",
                 "InstanceType": "t2.micro",
                 "SecurityGroupIds": [
                     {
@@ -433,7 +433,7 @@
                 },
                 "UserData": {
                     "Fn::Base64": {
-                        "Fn::Sub": "#!/bin/bash -xe\n# Get the latest CloudFormation package\nyum update -y aws-cfn-bootstrap\n# Start cfn-init\n/opt/aws/bin/cfn-init -s ${AWS::StackId} -r WebServerHost --region ${AWS::Region} || error_exit 'Failed to run cfn-init'\n# Start up the cfn-hup daemon to listen for changes to the EC2 instance metadata\n/opt/aws/bin/cfn-hup || error_exit 'Failed to start cfn-hup'\n# Get the CloudWatch Logs agent\nwget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py\n# Install the CloudWatch Logs agent\npython awslogs-agent-setup.py -n -r ${AWS::Region} -c /tmp/cwlogs/sshaccess.conf || error_exit 'Failed to run CloudWatch Logs agent setup'\n# All done so signal success\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackId} --resource WebServerHost --region ${AWS::Region}\n"
+                        "Fn::Sub": "#!/bin/bash -xe\n# Get the latest CloudFormation package\nyum update -y aws-cfn-bootstrap\n# Start cfn-init\n/opt/aws/bin/cfn-init -s ${AWS::StackId} -r WebServerInstance --region ${AWS::Region} || error_exit 'Failed to run cfn-init'\n# Start up the cfn-hup daemon to listen for changes to the EC2 instance metadata\n/opt/aws/bin/cfn-hup || error_exit 'Failed to start cfn-hup'\n# Get the CloudWatch Logs agent\nwget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py\n# Install the CloudWatch Logs agent\npython awslogs-agent-setup.py -n -r ${AWS::Region} -c /tmp/cwlogs/sshaccess.conf || error_exit 'Failed to run CloudWatch Logs agent setup'\n# All done so signal success\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackId} --resource WebServerInstance --region ${AWS::Region}\n"
                     }
                 }
             }

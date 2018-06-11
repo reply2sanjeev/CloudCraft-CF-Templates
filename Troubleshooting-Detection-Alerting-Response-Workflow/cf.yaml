@@ -299,7 +299,7 @@ Resources:
       ResourceSignal:
         Timeout: PT5M
     Properties:
-      ImageId: '%ami-42%'
+      ImageId: '%ami-43%'
       InstanceType: t2.micro
       SecurityGroupIds:
         - !Ref 'InstanceSecurityGroup'
