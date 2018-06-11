@@ -412,14 +412,22 @@
             "Properties": {
                 "ImageId": "%ami-42%",
                 "InstanceType": "t2.micro",
-                "SecurityGroups": [
+                "SecurityGroupIds": [
                     {
-                        "Ref": "WebServerSecurityGroup"
+                        "Ref": "InstanceSecurityGroup"
                     }
                 ],
                 "SubnetId": {
                     "Ref": "Subnet"
                 },
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": {
+                            "Ref": "AWS::StackId"
+                        }
+                    }
+                ],
                 "IamInstanceProfile": {
                     "Ref": "LogRoleInstanceProfile"
                 },

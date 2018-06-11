@@ -282,8 +282,8 @@ Resources:
               content: !Sub |
                 [cfn-auto-reloader-hook]
                 triggers=post.update
-                path=Resources.WebServerHost.Metadata.AWS::CloudFormation::Init
-                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WebServerHost --region ${AWS::Region}
+                path=Resources.WebServerInstance.Metadata.AWS::CloudFormation::Init
+                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WebServerInstance --region ${AWS::Region}
               mode: "000400"
               owner: "root"
               group: "root"
@@ -300,16 +300,13 @@ Resources:
         Timeout: PT5M
     Properties:
       ImageId: '%ami-42%'
-      InstanceType: t2.micro      
-      # NetworkInterfaces: 
-      #   - AssociatePublicIpAddress: true
-      #     DeviceIndex: "0"
-      #     GroupSet: 
-      #       - Ref: WebServerSecurityGroup
-      #     SubnetId: !Ref Subnet
-      SecurityGroups:
-        - Ref: WebServerSecurityGroup
+      InstanceType: t2.micro
+      SecurityGroupIds:
+        - !Ref 'InstanceSecurityGroup'
       SubnetId: !Ref Subnet
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackId'
       IamInstanceProfile:
         Ref: LogRoleInstanceProfile
       UserData:
@@ -319,7 +316,7 @@ Resources:
             # Get the latest CloudFormation package
             yum update -y aws-cfn-bootstrap
             # Start cfn-init
-            /opt/aws/bin/cfn-init -s ${AWS::StackId} -r WebServerHost --region ${AWS::Region} || error_exit 'Failed to run cfn-init'
+            /opt/aws/bin/cfn-init -s ${AWS::StackId} -r WebServerInstance --region ${AWS::Region} || error_exit 'Failed to run cfn-init'
             # Start up the cfn-hup daemon to listen for changes to the EC2 instance metadata
             /opt/aws/bin/cfn-hup || error_exit 'Failed to start cfn-hup'
             # Get the CloudWatch Logs agent
@@ -327,7 +324,7 @@ Resources:
             # Install the CloudWatch Logs agent
             python awslogs-agent-setup.py -n -r ${AWS::Region} -c /tmp/cwlogs/sshaccess.conf || error_exit 'Failed to run CloudWatch Logs agent setup'
             # All done so signal success
-            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackId} --resource WebServerHost --region ${AWS::Region}
+            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackId} --resource WebServerInstance --region ${AWS::Region}
   
   WebServerLogGroup:
     Type: AWS::Logs::LogGroup
