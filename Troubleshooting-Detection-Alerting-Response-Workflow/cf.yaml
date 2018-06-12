@@ -16,8 +16,10 @@ Description: AWS CloudFormation Template for 'Troubleshooting a Detection, Alert
 Resources:
 
   VPC:
-    Type: AWS::EC2::VPC
+    Type: AWS::EC2::VPC    
     Properties:
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
       CidrBlock: 10.0.0.0/16
       Tags:
         - Key: Application
@@ -30,11 +32,14 @@ Resources:
   Subnet:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref 'VPC'
-      CidrBlock: 10.0.0.0/24
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
       Tags:
         - Key: Application
           Value: !Ref 'AWS::StackId'
+      AvailabilityZone: !Select 
+        - '0'
+        - !GetAZs ''
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
@@ -83,92 +88,92 @@ Resources:
     Type: AWS::EC2::NetworkAclEntry
     Properties:
       NetworkAclId: !Ref 'NetworkAcl'
-      RuleNumber: '100'
-      Protocol: '6'
+      RuleNumber: 100
+      Protocol: 6
       RuleAction: allow
-      Egress: 'false'
-      CidrBlock: '0.0.0.0/0'
+      Egress: false
+      CidrBlock: 0.0.0.0/0
       PortRange:
-        From: '80'
-        To: '80'
+        From: 80
+        To: 80
 
   InboundSSHNetworkAclEntry:
     Type: AWS::EC2::NetworkAclEntry
     Properties:
       NetworkAclId: !Ref 'NetworkAcl'
-      RuleNumber: '101'
-      Protocol: '6'
+      RuleNumber: 101
+      Protocol: 6
       RuleAction: allow
-      Egress: 'false'
+      Egress: false
       CidrBlock: '0.0.0.0/0'
       PortRange:
-        From: '22'
-        To: '22'
+        From: 22
+        To: 22
 
   InboundResponsePortsNetworkAclEntry:
     Type: AWS::EC2::NetworkAclEntry
     Properties:
-      NetworkAclId: !Ref 'NetworkAcl'
-      RuleNumber: '102'
-      Protocol: '6'
+      NetworkAclId: !Ref NetworkAcl
+      RuleNumber: 102
+      Protocol: 6
       RuleAction: allow
-      Egress: 'false'
+      Egress: false
       CidrBlock: '0.0.0.0/0'
       PortRange:
-        From: '1024'
-        To: '65535'
+        From: 1024
+        To: 65535
 
   OutBoundHTTPNetworkAclEntry:
     Type: AWS::EC2::NetworkAclEntry
     Properties:
       NetworkAclId: !Ref 'NetworkAcl'
-      RuleNumber: '100'
-      Protocol: '6'
+      RuleNumber: 100
+      Protocol: 6
       RuleAction: allow
-      Egress: 'true'
+      Egress: true
       CidrBlock: '0.0.0.0/0'
       PortRange:
-        From: '80'
-        To: '80'
+        From: 80
+        To: 80
 
   OutBoundHTTPSNetworkAclEntry:
     Type: AWS::EC2::NetworkAclEntry
     Properties:
-      NetworkAclId: !Ref 'NetworkAcl'
-      RuleNumber: '101'
-      Protocol: '6'
+      NetworkAclId: !Ref NetworkAcl
+      RuleNumber: 101
+      Protocol: 6
       RuleAction: allow
-      Egress: 'true'
+      Egress: true
       CidrBlock: '0.0.0.0/0'
       PortRange:
-        From: '443'
-        To: '443'
+        From: 443
+        To: 443
 
   OutBoundResponsePortsNetworkAclEntry:
     Type: AWS::EC2::NetworkAclEntry
     Properties:
-      NetworkAclId: !Ref 'NetworkAcl'
-      RuleNumber: '102'
-      Protocol: '6'
+      NetworkAclId: !Ref NetworkAcl
+      RuleNumber: 102
+      Protocol: 6
       RuleAction: allow
-      Egress: 'true'
+      Egress: true
       CidrBlock: '0.0.0.0/0'
       PortRange:
-        From: '1024'
-        To: '65535'
+        From: 1024
+        To: 65535
 
   SubnetNetworkAclAssociation:
     Type: AWS::EC2::SubnetNetworkAclAssociation
     Properties:
-      SubnetId: !Ref 'Subnet'
-      NetworkAclId: !Ref 'NetworkAcl'
+      SubnetId: !Ref Subnet
+      NetworkAclId: !Ref NetworkAcl
 
-  IPAddress:
-    Type: AWS::EC2::EIP
-    DependsOn: AttachGateway
-    Properties:
-      Domain: vpc
-      InstanceId: !Ref 'WebServerInstance'
+  # IPAddress:
+  #   Type: AWS::EC2::EIP
+  #   DependsOn: AttachGateway
+  #   Properties:
+  #     Domain: vpc
+  #     InstanceId: !Ref WebServerInstance
 
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -177,12 +182,12 @@ Resources:
       GroupDescription: Enable SSH access via port 22
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: '22'
-          ToPort: '22'
+          FromPort: 22
+          ToPort: 22
           CidrIp: '0.0.0.0/0'
         - IpProtocol: tcp
-          FromPort: '80'
-          ToPort: '80'
+          FromPort: 80
+          ToPort: 80
           CidrIp: '0.0.0.0/0'
 
   # define the EC2 assume rule
@@ -208,6 +213,7 @@ Resources:
             Action:
             - logs:Create*
             - logs:PutLogEvents
+            - logs:Describe*
             Resource:
             - arn:aws:logs:*:*:*
 
@@ -246,9 +252,8 @@ Resources:
       AWS::CloudFormation::Init:
         config:
           packages:
-            yum:
-              httpd: []
-              php: []
+            yum:            
+              httpd: []              
           files:
             "/tmp/cwlogs/sshaccess.conf":
               content: !Sub |
@@ -262,11 +267,8 @@ Resources:
               mode: '000400'
               owner: "root"
               group: "root"
-            "/var/www/html/index.php":
-              content: !Sub |
-                <?php
-                echo '<h1>AWS CloudFormation sample PHP application</h1>';
-                ?>
+            "/var/www/html/index.html":
+              content: <h1>AWS CloudFormation sample PHP application</h1>
               mode: '000644'
               owner: apache
               group: apache
@@ -292,23 +294,24 @@ Resources:
               httpd:
                 enabled: 'true'
                 ensureRunning: 'true'
-              sendmail:
-                enabled: 'false'
-                ensureRunning: 'false'
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT5M
+        Timeout: PT10M
     Properties:
       ImageId: '%ami-43%'
       InstanceType: t2.micro
-      SecurityGroupIds:
-        - !Ref 'InstanceSecurityGroup'
-      SubnetId: !Ref Subnet
       Tags:
         - Key: Application
           Value: !Ref 'AWS::StackId'
       IamInstanceProfile:
         Ref: LogRoleInstanceProfile
+      NetworkInterfaces:
+        - GroupSet:
+            - !Ref InstanceSecurityGroup
+          AssociatePublicIpAddress: true
+          DeviceIndex: '0'
+          DeleteOnTermination: true
+          SubnetId: !Ref Subnet
       UserData:
         "Fn::Base64":
           !Sub |
@@ -328,8 +331,9 @@ Resources:
   
   WebServerLogGroup:
     Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
     Properties:
-      RetentionInDays: 7
+      RetentionInDays: 7    
 
   # InvalidUser and InvalidUserAlarm:
   # When a user tries to SSH with invalid username the next line is logged in the SSH log file:
@@ -386,11 +390,6 @@ Resources:
   
   AlarmNotificationTopic:
     Type: AWS::SNS::Topic
-    # Properties:
-    #   Subscription:
-    #   - Endpoint:
-    #       Ref: OperatorEmail
-    #     Protocol: email
 
 
 Outputs:

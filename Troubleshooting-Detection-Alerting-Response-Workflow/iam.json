@@ -4,16 +4,15 @@
         {
             "Effect": "Allow",
             "Action": [
-                "ec2:DescribeInstances",
-                "ec2:DescribeInstanceStatus",
-                "ec2:DescribeTags",
+                "ec2:Describe*",
                 "ec2:StartInstances",
                 "ec2:StopInstances",
                 "ec2:RebootInstances",
                 "cloudtrail:*",
                 "sns:*",
                 "logs:*",
-                "cloudwatch:*"
+                "cloudwatch:*",
+                "cloudformation:*"
             ],
             "Resource": "*"
         }

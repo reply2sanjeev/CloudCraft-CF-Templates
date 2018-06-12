@@ -5,6 +5,8 @@
         "VPC": {
             "Type": "AWS::EC2::VPC",
             "Properties": {
+                "EnableDnsSupport": true,
+                "EnableDnsHostnames": true,
                 "CidrBlock": "10.0.0.0/16",
                 "Tags": [
                     {
@@ -30,7 +32,7 @@
                 "VpcId": {
                     "Ref": "VPC"
                 },
-                "CidrBlock": "10.0.0.0/24",
+                "CidrBlock": "10.0.1.0/24",
                 "Tags": [
                     {
                         "Key": "Application",
@@ -38,7 +40,15 @@
                             "Ref": "AWS::StackId"
                         }
                     }
-                ]
+                ],
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        "0",
+                        {
+                            "Fn::GetAZs": ""
+                        }
+                    ]
+                }
             }
         },
         "InternetGateway": {
@@ -127,14 +137,14 @@
                 "NetworkAclId": {
                     "Ref": "NetworkAcl"
                 },
-                "RuleNumber": "100",
-                "Protocol": "6",
+                "RuleNumber": 100,
+                "Protocol": 6,
                 "RuleAction": "allow",
-                "Egress": "false",
+                "Egress": false,
                 "CidrBlock": "0.0.0.0/0",
                 "PortRange": {
-                    "From": "80",
-                    "To": "80"
+                    "From": 80,
+                    "To": 80
                 }
             }
         },
@@ -144,14 +154,14 @@
                 "NetworkAclId": {
                     "Ref": "NetworkAcl"
                 },
-                "RuleNumber": "101",
-                "Protocol": "6",
+                "RuleNumber": 101,
+                "Protocol": 6,
                 "RuleAction": "allow",
-                "Egress": "false",
+                "Egress": false,
                 "CidrBlock": "0.0.0.0/0",
                 "PortRange": {
-                    "From": "22",
-                    "To": "22"
+                    "From": 22,
+                    "To": 22
                 }
             }
         },
@@ -161,14 +171,14 @@
                 "NetworkAclId": {
                     "Ref": "NetworkAcl"
                 },
-                "RuleNumber": "102",
-                "Protocol": "6",
+                "RuleNumber": 102,
+                "Protocol": 6,
                 "RuleAction": "allow",
-                "Egress": "false",
+                "Egress": false,
                 "CidrBlock": "0.0.0.0/0",
                 "PortRange": {
-                    "From": "1024",
-                    "To": "65535"
+                    "From": 1024,
+                    "To": 65535
                 }
             }
         },
@@ -178,14 +188,14 @@
                 "NetworkAclId": {
                     "Ref": "NetworkAcl"
                 },
-                "RuleNumber": "100",
-                "Protocol": "6",
+                "RuleNumber": 100,
+                "Protocol": 6,
                 "RuleAction": "allow",
-                "Egress": "true",
+                "Egress": true,
                 "CidrBlock": "0.0.0.0/0",
                 "PortRange": {
-                    "From": "80",
-                    "To": "80"
+                    "From": 80,
+                    "To": 80
                 }
             }
         },
@@ -195,14 +205,14 @@
                 "NetworkAclId": {
                     "Ref": "NetworkAcl"
                 },
-                "RuleNumber": "101",
-                "Protocol": "6",
+                "RuleNumber": 101,
+                "Protocol": 6,
                 "RuleAction": "allow",
-                "Egress": "true",
+                "Egress": true,
                 "CidrBlock": "0.0.0.0/0",
                 "PortRange": {
-                    "From": "443",
-                    "To": "443"
+                    "From": 443,
+                    "To": 443
                 }
             }
         },
@@ -212,14 +222,14 @@
                 "NetworkAclId": {
                     "Ref": "NetworkAcl"
                 },
-                "RuleNumber": "102",
-                "Protocol": "6",
+                "RuleNumber": 102,
+                "Protocol": 6,
                 "RuleAction": "allow",
-                "Egress": "true",
+                "Egress": true,
                 "CidrBlock": "0.0.0.0/0",
                 "PortRange": {
-                    "From": "1024",
-                    "To": "65535"
+                    "From": 1024,
+                    "To": 65535
                 }
             }
         },
@@ -234,16 +244,6 @@
                 }
             }
         },
-        "IPAddress": {
-            "Type": "AWS::EC2::EIP",
-            "DependsOn": "AttachGateway",
-            "Properties": {
-                "Domain": "vpc",
-                "InstanceId": {
-                    "Ref": "WebServerInstance"
-                }
-            }
-        },
         "InstanceSecurityGroup": {
             "Type": "AWS::EC2::SecurityGroup",
             "Properties": {
@@ -254,14 +254,14 @@
                 "SecurityGroupIngress": [
                     {
                         "IpProtocol": "tcp",
-                        "FromPort": "22",
-                        "ToPort": "22",
+                        "FromPort": 22,
+                        "ToPort": 22,
                         "CidrIp": "0.0.0.0/0"
                     },
                     {
                         "IpProtocol": "tcp",
-                        "FromPort": "80",
-                        "ToPort": "80",
+                        "FromPort": 80,
+                        "ToPort": 80,
                         "CidrIp": "0.0.0.0/0"
                     }
                 ]
@@ -297,7 +297,8 @@
                                     "Effect": "Allow",
                                     "Action": [
                                         "logs:Create*",
-                                        "logs:PutLogEvents"
+                                        "logs:PutLogEvents",
+                                        "logs:Describe*"
                                     ],
                                     "Resource": [
                                         "arn:aws:logs:*:*:*"
@@ -351,8 +352,7 @@
                     "config": {
                         "packages": {
                             "yum": {
-                                "httpd": [],
-                                "php": []
+                                "httpd": []
                             }
                         },
                         "files": {
@@ -364,10 +364,8 @@
                                 "owner": "root",
                                 "group": "root"
                             },
-                            "/var/www/html/index.php": {
-                                "content": {
-                                    "Fn::Sub": "<?php\necho '<h1>AWS CloudFormation sample PHP application</h1>';\n?>\n"
-                                },
+                            "/var/www/html/index.html": {
+                                "content": "<h1>AWS CloudFormation sample PHP application</h1>",
                                 "mode": "000644",
                                 "owner": "apache",
                                 "group": "apache"
@@ -394,10 +392,6 @@
                                 "httpd": {
                                     "enabled": "true",
                                     "ensureRunning": "true"
-                                },
-                                "sendmail": {
-                                    "enabled": "false",
-                                    "ensureRunning": "false"
                                 }
                             }
                         }
@@ -406,20 +400,12 @@
             },
             "CreationPolicy": {
                 "ResourceSignal": {
-                    "Timeout": "PT5M"
+                    "Timeout": "PT10M"
                 }
             },
             "Properties": {
                 "ImageId": "%ami-43%",
                 "InstanceType": "t2.micro",
-                "SecurityGroupIds": [
-                    {
-                        "Ref": "InstanceSecurityGroup"
-                    }
-                ],
-                "SubnetId": {
-                    "Ref": "Subnet"
-                },
                 "Tags": [
                     {
                         "Key": "Application",
@@ -431,6 +417,21 @@
                 "IamInstanceProfile": {
                     "Ref": "LogRoleInstanceProfile"
                 },
+                "NetworkInterfaces": [
+                    {
+                        "GroupSet": [
+                            {
+                                "Ref": "InstanceSecurityGroup"
+                            }
+                        ],
+                        "AssociatePublicIpAddress": true,
+                        "DeviceIndex": "0",
+                        "DeleteOnTermination": true,
+                        "SubnetId": {
+                            "Ref": "Subnet"
+                        }
+                    }
+                ],
                 "UserData": {
                     "Fn::Base64": {
                         "Fn::Sub": "#!/bin/bash -xe\n# Get the latest CloudFormation package\nyum update -y aws-cfn-bootstrap\n# Start cfn-init\n/opt/aws/bin/cfn-init -s ${AWS::StackId} -r WebServerInstance --region ${AWS::Region} || error_exit 'Failed to run cfn-init'\n# Start up the cfn-hup daemon to listen for changes to the EC2 instance metadata\n/opt/aws/bin/cfn-hup || error_exit 'Failed to start cfn-hup'\n# Get the CloudWatch Logs agent\nwget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py\n# Install the CloudWatch Logs agent\npython awslogs-agent-setup.py -n -r ${AWS::Region} -c /tmp/cwlogs/sshaccess.conf || error_exit 'Failed to run CloudWatch Logs agent setup'\n# All done so signal success\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackId} --resource WebServerInstance --region ${AWS::Region}\n"
@@ -440,6 +441,7 @@
         },
         "WebServerLogGroup": {
             "Type": "AWS::Logs::LogGroup",
+            "DeletionPolicy": "Retain",
             "Properties": {
                 "RetentionInDays": 7
             }
