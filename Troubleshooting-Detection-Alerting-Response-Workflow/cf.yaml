@@ -3,6 +3,15 @@ AWSTemplateFormatVersion: '2010-09-09'
 # This template boots an EC2 instance, and installs the CloudWacth Logs agent. 
 # Two CloudWatch Metric Filters and Alarms are configured to catch suspicious SSH activity.
 #
+# This environment contains 3 deliberate "breaks" that the student is required to
+# fix in order to solve the learning activity:
+#   1. The threshold on the alarm is set to 222 sec instead of 2 sec.
+#      A threshold that high will never trigger in the lab unless they script an
+#      SSH attack (unlikely), so the student needs to set to 2 sec.
+#   2. Lambda function is not subscribed to the SNS topic
+#      Student needs to subscribe the Lambda function StopInstance to the topic
+#   3. Student needs to subscribe their email to the topic
+#
 # Heavily inspired by:
 # https://aws.amazon.com/blogs/security/how-to-monitor-and-visualize-failed-ssh-access-attempts-to-amazon-ec2-linux-instances
 # https://s3.amazonaws.com/awsiammedia/public/sample/MonitorSSHActivities/CloudWatchLogs_ssh.yaml
@@ -168,13 +177,6 @@ Resources:
       SubnetId: !Ref Subnet
       NetworkAclId: !Ref NetworkAcl
 
-  # IPAddress:
-  #   Type: AWS::EC2::EIP
-  #   DependsOn: AttachGateway
-  #   Properties:
-  #     Domain: vpc
-  #     InstanceId: !Ref WebServerInstance
-
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -333,12 +335,12 @@ Resources:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
     Properties:
-      RetentionInDays: 7    
+      RetentionInDays: 7
 
-  # InvalidUser and InvalidUserAlarm:
+  # InvalidSSHLogin and InvalidSSHLoginAlarm:
   # When a user tries to SSH with invalid username the next line is logged in the SSH log file:
   # Apr 20 02:39:35 ip-172-31-63-56 sshd[17136]: Received disconnect from xxx.xxx.xxx.xxx: 11:  [preauth]
-  InvalidUser:
+  InvalidSSHLogin:
     Type: AWS::Logs::MetricFilter
     Properties:
       LogGroupName:
@@ -347,23 +349,23 @@ Resources:
       MetricTransformations:
       - MetricValue: '1'
         MetricNamespace: SSH
-        MetricName: sshInvalidUser
+        MetricName: InvalidSSHLogin
 
-  InvalidUserAlarm:
+  InvalidSSHLoginAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmDescription: !Sub 'The number of invalid users is greater than 2 over 1 minutes ${WebServerInstance}'
-      MetricName: sshInvalidUser
+      AlarmDescription: !Sub 'Invalid login attempts >2 in 1 min for instance ${WebServerInstance}'
+      MetricName: InvalidSSHLogin
       Namespace: SSH
       Statistic: Sum
       Period: 60
       EvaluationPeriods: 1
-      Threshold: 2
+      Threshold: 222 # this is one of the 'breaks' - it should be 2 seconds
       AlarmActions:
       - Ref: AlarmNotificationTopic
       ComparisonOperator: GreaterThanThreshold
 
-  SSHReceiveddisconnect:
+  SSHDisconnectRequest:
     Type: AWS::Logs::MetricFilter
     Properties:
       LogGroupName:
@@ -372,13 +374,13 @@ Resources:
       MetricTransformations:
       - MetricValue: '1'
         MetricNamespace: SSH
-        MetricName: sshDisconnect
+        MetricName: SSHDisconnectRequest
 
-  SSHReceiveddisconnectAlarm:
+  SSHDisconnectRequestAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmDescription: !Sub 'The number disconnect requests is greater then 10 in 5 minutes ${WebServerInstance}'
-      MetricName: sshDisconnect
+      AlarmDescription: !Sub 'Disconnect requests >10 in 5 min for instance ${WebServerInstance}'
+      MetricName: SSHDisconnectRequest
       Namespace: SSH
       Statistic: Sum
       Period: 60
@@ -390,19 +392,21 @@ Resources:
   
   AlarmNotificationTopic:
     Type: AWS::SNS::Topic
-    Properties:      
-      Subscription:
-        - Endpoint: !GetAtt StopInstance.Arn
-          Protocol: lambda
-    DependsOn:
-      - StopInstance
+    # The topic is left unsubscribed to the Lambda function - this is one of the 
+    # 'breaks' that the student will need to fix
+    # Properties:      
+    #   Subscription:
+    #     - Endpoint: !GetAtt StopInstance.Arn
+    #       Protocol: lambda
+    #DependsOn:
+    #  - StopInstance
 
   LambdaInvokePermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
       Principal: sns.amazonaws.com
-      SourceArn: !Ref AlarmNotificationTopic
+      # SourceArn: !Ref AlarmNotificationTopic
       FunctionName: !GetAtt StopInstance.Arn
 
   StopInstance:

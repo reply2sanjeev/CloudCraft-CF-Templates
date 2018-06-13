@@ -4,15 +4,23 @@
         {
             "Effect": "Allow",
             "Action": [
+                "cloudformation:DescribeStackResources",
+                "cloudformation:DescribeStacks",
+                "cloudformation:ListStackResources",
+                "cloudwatch:*",
                 "ec2:Describe*",
+                "ec2:RebootInstances",
                 "ec2:StartInstances",
                 "ec2:StopInstances",
-                "ec2:RebootInstances",
-                "cloudtrail:*",
-                "sns:*",
+                "iam:GetRolePolicy",
+                "iam:ListAttachedRolePolicies",
+                "iam:ListRolePolicies",
+                "iam:ListRoles",
+                "kms:ListAliases",
+                "lambda:*",
                 "logs:*",
-                "cloudwatch:*",
-                "cloudformation:*"
+                "sns:*",
+                "tag:GetResources"
             ],
             "Resource": "*"
         }

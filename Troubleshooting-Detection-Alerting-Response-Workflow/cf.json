@@ -446,7 +446,7 @@
                 "RetentionInDays": 7
             }
         },
-        "InvalidUser": {
+        "InvalidSSHLogin": {
             "Type": "AWS::Logs::MetricFilter",
             "Properties": {
                 "LogGroupName": {
@@ -457,23 +457,23 @@
                     {
                         "MetricValue": "1",
                         "MetricNamespace": "SSH",
-                        "MetricName": "sshInvalidUser"
+                        "MetricName": "InvalidSSHLogin"
                     }
                 ]
             }
         },
-        "InvalidUserAlarm": {
+        "InvalidSSHLoginAlarm": {
             "Type": "AWS::CloudWatch::Alarm",
             "Properties": {
                 "AlarmDescription": {
-                    "Fn::Sub": "The number of invalid users is greater than 2 over 1 minutes ${WebServerInstance}"
+                    "Fn::Sub": "Invalid login attempts >2 in 1 min for instance ${WebServerInstance}"
                 },
-                "MetricName": "sshInvalidUser",
+                "MetricName": "InvalidSSHLogin",
                 "Namespace": "SSH",
                 "Statistic": "Sum",
                 "Period": 60,
                 "EvaluationPeriods": 1,
-                "Threshold": 2,
+                "Threshold": 222,
                 "AlarmActions": [
                     {
                         "Ref": "AlarmNotificationTopic"
@@ -482,7 +482,7 @@
                 "ComparisonOperator": "GreaterThanThreshold"
             }
         },
-        "SSHReceiveddisconnect": {
+        "SSHDisconnectRequest": {
             "Type": "AWS::Logs::MetricFilter",
             "Properties": {
                 "LogGroupName": {
@@ -493,18 +493,18 @@
                     {
                         "MetricValue": "1",
                         "MetricNamespace": "SSH",
-                        "MetricName": "sshDisconnect"
+                        "MetricName": "SSHDisconnectRequest"
                     }
                 ]
             }
         },
-        "SSHReceiveddisconnectAlarm": {
+        "SSHDisconnectRequestAlarm": {
             "Type": "AWS::CloudWatch::Alarm",
             "Properties": {
                 "AlarmDescription": {
-                    "Fn::Sub": "The number disconnect requests is greater then 10 in 5 minutes ${WebServerInstance}"
+                    "Fn::Sub": "Disconnect requests >10 in 5 min for instance ${WebServerInstance}"
                 },
-                "MetricName": "sshDisconnect",
+                "MetricName": "SSHDisconnectRequest",
                 "Namespace": "SSH",
                 "Statistic": "Sum",
                 "Period": 60,
@@ -519,32 +519,13 @@
             }
         },
         "AlarmNotificationTopic": {
-            "Type": "AWS::SNS::Topic",
-            "Properties": {
-                "Subscription": [
-                    {
-                        "Endpoint": {
-                            "Fn::GetAtt": [
-                                "StopInstance",
-                                "Arn"
-                            ]
-                        },
-                        "Protocol": "lambda"
-                    }
-                ]
-            },
-            "DependsOn": [
-                "StopInstance"
-            ]
+            "Type": "AWS::SNS::Topic"
         },
         "LambdaInvokePermission": {
             "Type": "AWS::Lambda::Permission",
             "Properties": {
                 "Action": "lambda:InvokeFunction",
                 "Principal": "sns.amazonaws.com",
-                "SourceArn": {
-                    "Ref": "AlarmNotificationTopic"
-                },
                 "FunctionName": {
                     "Fn::GetAtt": [
                         "StopInstance",
