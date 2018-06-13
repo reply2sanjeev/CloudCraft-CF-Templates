@@ -352,7 +352,7 @@ Resources:
   InvalidUserAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmDescription: The number of invalid users is greater than 2 over 1 minutes
+      AlarmDescription: !Sub 'The number of invalid users is greater than 2 over 1 minutes ${WebServerInstance}'
       MetricName: sshInvalidUser
       Namespace: SSH
       Statistic: Sum
@@ -377,7 +377,7 @@ Resources:
   SSHReceiveddisconnectAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmDescription: The number disconnect requests is greater then 10 in 5 minutes
+      AlarmDescription: !Sub 'The number disconnect requests is greater then 10 in 5 minutes ${WebServerInstance}'
       MetricName: sshDisconnect
       Namespace: SSH
       Statistic: Sum
@@ -390,6 +390,83 @@ Resources:
   
   AlarmNotificationTopic:
     Type: AWS::SNS::Topic
+    Properties:      
+      Subscription:
+        - Endpoint: !GetAtt StopInstance.Arn
+          Protocol: lambda
+    DependsOn:
+      - StopInstance
+
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      Principal: sns.amazonaws.com
+      SourceArn: !Ref AlarmNotificationTopic
+      FunctionName: !GetAtt StopInstance.Arn
+
+  StopInstance:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Description: Extract the EC2 instance ID from the Alarm Description, and stop the instance.      
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: python3.6
+      Timeout: 5
+      Code:
+        ZipFile: |
+          import boto3
+          import json
+
+
+          def lambda_handler(event, context):
+              '''
+              Extract the EC2 instance ID from the Alarm Description, and stop the
+              instance.
+              '''
+
+              try:
+                  json_message = event['Message']
+                  message = json.loads(json_message)
+                  instance = message['AlarmDescription'].split()[-1]
+
+                  print("Instance: " + instance)
+
+                  ec2 = boto3.client('ec2')
+                  ec2.stop_instances(InstanceIds=[instance])
+
+                  print('Stopped instance: ' + instance)
+              except Exception as e:
+                  print('Error: ' + e)
+              
+  LambdaExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+
+  LambdaPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: root
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'logs:CreateLogGroup'
+              - 'logs:CreateLogStream'
+              - 'logs:PutLogEvents'
+              - 'ec2:StopInstance'
+              - 'sns:Publish'            
+            Resource: '*'
+      Roles:
+        - !Ref LambdaExecutionRole
 
 
 Outputs:
