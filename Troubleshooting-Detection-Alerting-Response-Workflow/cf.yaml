@@ -318,6 +318,10 @@ Resources:
         "Fn::Base64":
           !Sub |
             #!/bin/bash -xe
+            # Truncate /var/log/secure to prevent old messages from showing up in the log
+            truncate -s 0 /var/log/secure
+            # Set cloud_user password
+            /bin/echo '%password%' | /bin/passwd cloud_user --stdin
             # Get the latest CloudFormation package
             yum update -y aws-cfn-bootstrap
             # Start cfn-init
@@ -337,15 +341,16 @@ Resources:
     Properties:
       RetentionInDays: 7
 
-  # InvalidSSHLogin and InvalidSSHLoginAlarm:
-  # When a user tries to SSH with invalid username the next line is logged in the SSH log file:
-  # Apr 20 02:39:35 ip-172-31-63-56 sshd[17136]: Received disconnect from xxx.xxx.xxx.xxx: 11:  [preauth]
+  # InvalidSSHLogin and InvalidSSHLoginAlarm:  
+  # Failed login attempts will appear in /var/log/secure like this:
+  # Jun 13 21:18:51 ip-10-0-1-212 sshd[8884]: Failed password for cloud_user from 73.125.25.100 port 47696 ssh2
+  # So we are filtering on the word "Failed" (case sensitive)
   InvalidSSHLogin:
     Type: AWS::Logs::MetricFilter
     Properties:
       LogGroupName:
         Ref: WebServerLogGroup
-      FilterPattern: "[Mon, day, timestamp, ip, id, status = Invalid, ...]"
+      FilterPattern: "[Mon, day, timestamp, ip, id, status = Failed, ...]"
       MetricTransformations:
       - MetricValue: '1'
         MetricNamespace: SSH

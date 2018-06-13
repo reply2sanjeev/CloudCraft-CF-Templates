@@ -434,7 +434,7 @@
                 ],
                 "UserData": {
                     "Fn::Base64": {
-                        "Fn::Sub": "#!/bin/bash -xe\n# Get the latest CloudFormation package\nyum update -y aws-cfn-bootstrap\n# Start cfn-init\n/opt/aws/bin/cfn-init -s ${AWS::StackId} -r WebServerInstance --region ${AWS::Region} || error_exit 'Failed to run cfn-init'\n# Start up the cfn-hup daemon to listen for changes to the EC2 instance metadata\n/opt/aws/bin/cfn-hup || error_exit 'Failed to start cfn-hup'\n# Get the CloudWatch Logs agent\nwget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py\n# Install the CloudWatch Logs agent\npython awslogs-agent-setup.py -n -r ${AWS::Region} -c /tmp/cwlogs/sshaccess.conf || error_exit 'Failed to run CloudWatch Logs agent setup'\n# All done so signal success\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackId} --resource WebServerInstance --region ${AWS::Region}\n"
+                        "Fn::Sub": "#!/bin/bash -xe\n# Truncate /var/log/secure to prevent old messages from showing up in the log\ntruncate -s 0 /var/log/secure\n# Set cloud_user password\n/bin/echo '%password%' | /bin/passwd cloud_user --stdin\n# Get the latest CloudFormation package\nyum update -y aws-cfn-bootstrap\n# Start cfn-init\n/opt/aws/bin/cfn-init -s ${AWS::StackId} -r WebServerInstance --region ${AWS::Region} || error_exit 'Failed to run cfn-init'\n# Start up the cfn-hup daemon to listen for changes to the EC2 instance metadata\n/opt/aws/bin/cfn-hup || error_exit 'Failed to start cfn-hup'\n# Get the CloudWatch Logs agent\nwget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py\n# Install the CloudWatch Logs agent\npython awslogs-agent-setup.py -n -r ${AWS::Region} -c /tmp/cwlogs/sshaccess.conf || error_exit 'Failed to run CloudWatch Logs agent setup'\n# All done so signal success\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackId} --resource WebServerInstance --region ${AWS::Region}\n"
                     }
                 }
             }
@@ -452,7 +452,7 @@
                 "LogGroupName": {
                     "Ref": "WebServerLogGroup"
                 },
-                "FilterPattern": "[Mon, day, timestamp, ip, id, status = Invalid, ...]",
+                "FilterPattern": "[Mon, day, timestamp, ip, id, status = Failed, ...]",
                 "MetricTransformations": [
                     {
                         "MetricValue": "1",
