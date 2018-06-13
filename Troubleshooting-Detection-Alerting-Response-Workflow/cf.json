@@ -465,7 +465,9 @@
         "InvalidUserAlarm": {
             "Type": "AWS::CloudWatch::Alarm",
             "Properties": {
-                "AlarmDescription": "The number of invalid users is greater than 2 over 1 minutes",
+                "AlarmDescription": {
+                    "Fn::Sub": "The number of invalid users is greater than 2 over 1 minutes ${WebServerInstance}"
+                },
                 "MetricName": "sshInvalidUser",
                 "Namespace": "SSH",
                 "Statistic": "Sum",
@@ -499,7 +501,9 @@
         "SSHReceiveddisconnectAlarm": {
             "Type": "AWS::CloudWatch::Alarm",
             "Properties": {
-                "AlarmDescription": "The number disconnect requests is greater then 10 in 5 minutes",
+                "AlarmDescription": {
+                    "Fn::Sub": "The number disconnect requests is greater then 10 in 5 minutes ${WebServerInstance}"
+                },
                 "MetricName": "sshDisconnect",
                 "Namespace": "SSH",
                 "Statistic": "Sum",
@@ -515,7 +519,101 @@
             }
         },
         "AlarmNotificationTopic": {
-            "Type": "AWS::SNS::Topic"
+            "Type": "AWS::SNS::Topic",
+            "Properties": {
+                "Subscription": [
+                    {
+                        "Endpoint": {
+                            "Fn::GetAtt": [
+                                "StopInstance",
+                                "Arn"
+                            ]
+                        },
+                        "Protocol": "lambda"
+                    }
+                ]
+            },
+            "DependsOn": [
+                "StopInstance"
+            ]
+        },
+        "LambdaInvokePermission": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+                "Action": "lambda:InvokeFunction",
+                "Principal": "sns.amazonaws.com",
+                "SourceArn": {
+                    "Ref": "AlarmNotificationTopic"
+                },
+                "FunctionName": {
+                    "Fn::GetAtt": [
+                        "StopInstance",
+                        "Arn"
+                    ]
+                }
+            }
+        },
+        "StopInstance": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Description": "Extract the EC2 instance ID from the Alarm Description, and stop the instance.",
+                "Handler": "index.lambda_handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecutionRole",
+                        "Arn"
+                    ]
+                },
+                "Runtime": "python3.6",
+                "Timeout": 5,
+                "Code": {
+                    "ZipFile": "import boto3\nimport json\n\n\ndef lambda_handler(event, context):\n    '''\n    Extract the EC2 instance ID from the Alarm Description, and stop the\n    instance.\n    '''\n\n    try:\n        json_message = event['Message']\n        message = json.loads(json_message)\n        instance = message['AlarmDescription'].split()[-1]\n\n        print(\"Instance: \" + instance)\n\n        ec2 = boto3.client('ec2')\n        ec2.stop_instances(InstanceIds=[instance])\n\n        print('Stopped instance: ' + instance)\n    except Exception as e:\n        print('Error: ' + e)\n    \n"
+                }
+            }
+        },
+        "LambdaExecutionRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "lambda.amazonaws.com"
+                            },
+                            "Action": "sts:AssumeRole"
+                        }
+                    ]
+                }
+            }
+        },
+        "LambdaPolicy": {
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyName": "root",
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "logs:CreateLogGroup",
+                                "logs:CreateLogStream",
+                                "logs:PutLogEvents",
+                                "ec2:StopInstance",
+                                "sns:Publish"
+                            ],
+                            "Resource": "*"
+                        }
+                    ]
+                },
+                "Roles": [
+                    {
+                        "Ref": "LambdaExecutionRole"
+                    }
+                ]
+            }
         }
     },
     "Outputs": {
