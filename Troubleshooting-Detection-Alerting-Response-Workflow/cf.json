@@ -434,7 +434,7 @@
                 ],
                 "UserData": {
                     "Fn::Base64": {
-                        "Fn::Sub": "#!/bin/bash -xe\n# Truncate /var/log/secure to prevent old messages from showing up in the log\ntruncate -s 0 /var/log/secure\n# Set cloud_user password\n/bin/echo '%password%' | /bin/passwd cloud_user --stdin\n# Get the latest CloudFormation package\nyum update -y aws-cfn-bootstrap\n# Start cfn-init\n/opt/aws/bin/cfn-init -s ${AWS::StackId} -r WebServerInstance --region ${AWS::Region} || error_exit 'Failed to run cfn-init'\n# Start up the cfn-hup daemon to listen for changes to the EC2 instance metadata\n/opt/aws/bin/cfn-hup || error_exit 'Failed to start cfn-hup'\n# Get the CloudWatch Logs agent\nwget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py\n# Install the CloudWatch Logs agent\npython awslogs-agent-setup.py -n -r ${AWS::Region} -c /tmp/cwlogs/sshaccess.conf || error_exit 'Failed to run CloudWatch Logs agent setup'\n# All done so signal success\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackId} --resource WebServerInstance --region ${AWS::Region}\n"
+                        "Fn::Sub": "#!/bin/bash -xe\n# Truncate /var/log/secure to prevent old messages from showing up in the log\ntruncate -s 0 /var/log/secure\n# Set cloud_user password (CloudCraft will replace %password% at deployment time)\n/bin/echo '%password%' | /bin/passwd cloud_user --stdin\n# Get the latest CloudFormation package\nyum update -y aws-cfn-bootstrap\n# Start cfn-init\n/opt/aws/bin/cfn-init -s ${AWS::StackId} -r WebServerInstance --region ${AWS::Region} || error_exit 'Failed to run cfn-init'\n# Start up the cfn-hup daemon to listen for changes to the EC2 instance metadata\n/opt/aws/bin/cfn-hup || error_exit 'Failed to start cfn-hup'\n# Get the CloudWatch Logs agent\nwget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py\n# Install the CloudWatch Logs agent\npython awslogs-agent-setup.py -n -r ${AWS::Region} -c /tmp/cwlogs/sshaccess.conf || error_exit 'Failed to run CloudWatch Logs agent setup'\n# All done so signal success\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackId} --resource WebServerInstance --region ${AWS::Region}\n"
                     }
                 }
             }
@@ -482,42 +482,6 @@
                 "ComparisonOperator": "GreaterThanThreshold"
             }
         },
-        "SSHDisconnectRequest": {
-            "Type": "AWS::Logs::MetricFilter",
-            "Properties": {
-                "LogGroupName": {
-                    "Ref": "WebServerLogGroup"
-                },
-                "FilterPattern": "[Mon, day, timestamp, ip, id, msg1, msg2 = disconnect, ...]",
-                "MetricTransformations": [
-                    {
-                        "MetricValue": "1",
-                        "MetricNamespace": "SSH",
-                        "MetricName": "SSHDisconnectRequest"
-                    }
-                ]
-            }
-        },
-        "SSHDisconnectRequestAlarm": {
-            "Type": "AWS::CloudWatch::Alarm",
-            "Properties": {
-                "AlarmDescription": {
-                    "Fn::Sub": "Disconnect requests >10 in 5 min for instance ${WebServerInstance}"
-                },
-                "MetricName": "SSHDisconnectRequest",
-                "Namespace": "SSH",
-                "Statistic": "Sum",
-                "Period": 60,
-                "EvaluationPeriods": 5,
-                "Threshold": 10,
-                "AlarmActions": [
-                    {
-                        "Ref": "AlarmNotificationTopic"
-                    }
-                ],
-                "ComparisonOperator": "GreaterThanThreshold"
-            }
-        },
         "AlarmNotificationTopic": {
             "Type": "AWS::SNS::Topic"
         },
@@ -548,7 +512,7 @@
                 "Runtime": "python3.6",
                 "Timeout": 5,
                 "Code": {
-                    "ZipFile": "import boto3\nimport json\n\n\ndef lambda_handler(event, context):\n    '''\n    Extract the EC2 instance ID from the Alarm Description, and stop the\n    instance.\n    '''\n\n    try:\n        json_message = event['Message']\n        message = json.loads(json_message)\n        instance = message['AlarmDescription'].split()[-1]\n\n        print(\"Instance: \" + instance)\n\n        ec2 = boto3.client('ec2')\n        ec2.stop_instances(InstanceIds=[instance])\n\n        print('Stopped instance: ' + instance)\n    except Exception as e:\n        print('Error: ' + e)\n    \n"
+                    "ZipFile": "import boto3\nimport json\n\n\ndef lambda_handler(event, context):\n    '''\n    Extract the EC2 instance ID from the Alarm Description, and stop the\n    instance.\n    '''\n\n    try:\n        print(event)\n        sns = event['Records'][0]['Sns']\n        print('DEBUG:', sns['Message'])\n        json_msg = json.loads(sns['Message'])\n        instance = json_msg['AlarmDescription'].split()[-1]\n\n        print(\"Instance: \" + instance)\n\n        ec2 = boto3.client('ec2')\n        ec2.stop_instances(InstanceIds=[instance])\n\n        print('Stopped instance: %s' % instance)\n\n    except Exception as e:\n        print('Error - reason \"%s\"' % str(e))\n"
                 }
             }
         },
@@ -582,7 +546,10 @@
                                 "logs:CreateLogGroup",
                                 "logs:CreateLogStream",
                                 "logs:PutLogEvents",
-                                "ec2:StopInstance",
+                                "ec2:StopInstances",
+                                "ec2:StartInstances",
+                                "ec2:RebootInstances",
+                                "ec2:TerminateInstances",
                                 "sns:Publish"
                             ],
                             "Resource": "*"

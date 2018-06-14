@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 
-# This template boots an EC2 instance, and installs the CloudWacth Logs agent. 
+# This template boots an EC2 instance, and installs the CloudWacth Logs agent.
 # Two CloudWatch Metric Filters and Alarms are configured to catch suspicious SSH activity.
 #
 # This environment contains 3 deliberate "breaks" that the student is required to
@@ -11,12 +11,14 @@ AWSTemplateFormatVersion: '2010-09-09'
 #   2. Lambda function is not subscribed to the SNS topic
 #      Student needs to subscribe the Lambda function StopInstance to the topic
 #   3. Student needs to subscribe their email to the topic
+#   4. After >2 failed SSH logins within 1 minute, the Lambda function will stop
+#      the EC2 instance.
 #
 # Heavily inspired by:
 # https://aws.amazon.com/blogs/security/how-to-monitor-and-visualize-failed-ssh-access-attempts-to-amazon-ec2-linux-instances
 # https://s3.amazonaws.com/awsiammedia/public/sample/MonitorSSHActivities/CloudWatchLogs_ssh.yaml
 #
-# CloudCraft: 
+# CloudCraft:
 # https://cloudcraft.linuxacademy.com/#/labs/details/4005a6bb-1daf-42d7-aa25-033f87c68927?courseId=203
 
 Description: AWS CloudFormation Template for 'Troubleshooting a Detection, Alerting, and Response Workflow'
@@ -25,7 +27,7 @@ Description: AWS CloudFormation Template for 'Troubleshooting a Detection, Alert
 Resources:
 
   VPC:
-    Type: AWS::EC2::VPC    
+    Type: AWS::EC2::VPC
     Properties:
       EnableDnsSupport: true
       EnableDnsHostnames: true
@@ -46,7 +48,7 @@ Resources:
       Tags:
         - Key: Application
           Value: !Ref 'AWS::StackId'
-      AvailabilityZone: !Select 
+      AvailabilityZone: !Select
         - '0'
         - !GetAZs ''
 
@@ -240,7 +242,7 @@ Resources:
         FromPort: 22
         ToPort: 22
         CidrIp: 0.0.0.0/0
-   
+
   # EC2 Server configuration:
   # - Install PHP & httpd
   # - Create temp CloudWatch Log agent configuration file, define log file, group and stream name
@@ -254,8 +256,8 @@ Resources:
       AWS::CloudFormation::Init:
         config:
           packages:
-            yum:            
-              httpd: []              
+            yum:
+              httpd: []
           files:
             "/tmp/cwlogs/sshaccess.conf":
               content: !Sub |
@@ -320,7 +322,7 @@ Resources:
             #!/bin/bash -xe
             # Truncate /var/log/secure to prevent old messages from showing up in the log
             truncate -s 0 /var/log/secure
-            # Set cloud_user password
+            # Set cloud_user password (CloudCraft will replace %password% at deployment time)
             /bin/echo '%password%' | /bin/passwd cloud_user --stdin
             # Get the latest CloudFormation package
             yum update -y aws-cfn-bootstrap
@@ -334,14 +336,14 @@ Resources:
             python awslogs-agent-setup.py -n -r ${AWS::Region} -c /tmp/cwlogs/sshaccess.conf || error_exit 'Failed to run CloudWatch Logs agent setup'
             # All done so signal success
             /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackId} --resource WebServerInstance --region ${AWS::Region}
-  
+
   WebServerLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
     Properties:
       RetentionInDays: 7
 
-  # InvalidSSHLogin and InvalidSSHLoginAlarm:  
+  # InvalidSSHLogin and InvalidSSHLoginAlarm:
   # Failed login attempts will appear in /var/log/secure like this:
   # Jun 13 21:18:51 ip-10-0-1-212 sshd[8884]: Failed password for cloud_user from 73.125.25.100 port 47696 ssh2
   # So we are filtering on the word "Failed" (case sensitive)
@@ -370,36 +372,36 @@ Resources:
       - Ref: AlarmNotificationTopic
       ComparisonOperator: GreaterThanThreshold
 
-  SSHDisconnectRequest:
-    Type: AWS::Logs::MetricFilter
-    Properties:
-      LogGroupName:
-        Ref: WebServerLogGroup
-      FilterPattern: "[Mon, day, timestamp, ip, id, msg1, msg2 = disconnect, ...]"
-      MetricTransformations:
-      - MetricValue: '1'
-        MetricNamespace: SSH
-        MetricName: SSHDisconnectRequest
+  # SSHDisconnectRequest:
+  #   Type: AWS::Logs::MetricFilter
+  #   Properties:
+  #     LogGroupName:
+  #       Ref: WebServerLogGroup
+  #     FilterPattern: "[Mon, day, timestamp, ip, id, msg1, msg2 = disconnect, ...]"
+  #     MetricTransformations:
+  #     - MetricValue: '1'
+  #       MetricNamespace: SSH
+  #       MetricName: SSHDisconnectRequest
 
-  SSHDisconnectRequestAlarm:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-      AlarmDescription: !Sub 'Disconnect requests >10 in 5 min for instance ${WebServerInstance}'
-      MetricName: SSHDisconnectRequest
-      Namespace: SSH
-      Statistic: Sum
-      Period: 60
-      EvaluationPeriods: 5
-      Threshold: 10
-      AlarmActions:
-      - Ref: AlarmNotificationTopic
-      ComparisonOperator: GreaterThanThreshold
-  
+  # SSHDisconnectRequestAlarm:
+  #   Type: AWS::CloudWatch::Alarm
+  #   Properties:
+  #     AlarmDescription: !Sub 'Disconnect requests >10 in 5 min for instance ${WebServerInstance}'
+  #     MetricName: SSHDisconnectRequest
+  #     Namespace: SSH
+  #     Statistic: Sum
+  #     Period: 60
+  #     EvaluationPeriods: 5
+  #     Threshold: 10
+  #     AlarmActions:
+  #     - Ref: AlarmNotificationTopic
+  #     ComparisonOperator: GreaterThanThreshold
+
   AlarmNotificationTopic:
     Type: AWS::SNS::Topic
-    # The topic is left unsubscribed to the Lambda function - this is one of the 
+    # The topic is left unsubscribed to the Lambda function - this is one of the
     # 'breaks' that the student will need to fix
-    # Properties:      
+    # Properties:
     #   Subscription:
     #     - Endpoint: !GetAtt StopInstance.Arn
     #       Protocol: lambda
@@ -417,7 +419,7 @@ Resources:
   StopInstance:
     Type: 'AWS::Lambda::Function'
     Properties:
-      Description: Extract the EC2 instance ID from the Alarm Description, and stop the instance.      
+      Description: Extract the EC2 instance ID from the Alarm Description, and stop the instance.
       Handler: index.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Runtime: python3.6
@@ -435,19 +437,23 @@ Resources:
               '''
 
               try:
-                  json_message = event['Message']
-                  message = json.loads(json_message)
-                  instance = message['AlarmDescription'].split()[-1]
+                  print(event)
+                  sns = event['Records'][0]['Sns']
+                  print('DEBUG:', sns['Message'])
+                  json_msg = json.loads(sns['Message'])
+                  instance = json_msg['AlarmDescription'].split()[-1]
 
                   print("Instance: " + instance)
 
                   ec2 = boto3.client('ec2')
                   ec2.stop_instances(InstanceIds=[instance])
 
-                  print('Stopped instance: ' + instance)
+                  print('Stopped instance: %s' % instance)
+
               except Exception as e:
-                  print('Error: ' + e)
-              
+                  print('Error - reason "%s"' % str(e))
+
+
   LambdaExecutionRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -471,8 +477,11 @@ Resources:
               - 'logs:CreateLogGroup'
               - 'logs:CreateLogStream'
               - 'logs:PutLogEvents'
-              - 'ec2:StopInstance'
-              - 'sns:Publish'            
+              - 'ec2:StopInstances'
+              - 'ec2:StartInstances'
+              - 'ec2:RebootInstances'
+              - 'ec2:TerminateInstances'
+              - 'sns:Publish'
             Resource: '*'
       Roles:
         - !Ref LambdaExecutionRole
@@ -481,7 +490,7 @@ Resources:
 Outputs:
   InstanceId:
     Description: The instance ID of the first web server
-    Value: !Ref WebServerInstance  
+    Value: !Ref WebServerInstance
   WebsiteURL:
     Value: !Sub 'http://${WebServerInstance.PublicDnsName}'
     Description: URL for Web Server
