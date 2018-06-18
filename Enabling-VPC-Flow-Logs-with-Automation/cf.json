@@ -1,0 +1,630 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Enabling VPC Flow Logs with Automation",
+    "Resources": {
+        "VPC": {
+            "Type": "AWS::EC2::VPC",
+            "Properties": {
+                "EnableDnsSupport": true,
+                "EnableDnsHostnames": true,
+                "CidrBlock": "10.0.0.0/16",
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": {
+                            "Ref": "AWS::StackId"
+                        }
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": "LinuxAcademy"
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "VPC"
+                    }
+                ]
+            }
+        },
+        "Subnet": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "CidrBlock": "10.0.1.0/24",
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": {
+                            "Ref": "AWS::StackId"
+                        }
+                    }
+                ],
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        "0",
+                        {
+                            "Fn::GetAZs": ""
+                        }
+                    ]
+                }
+            }
+        },
+        "InternetGateway": {
+            "Type": "AWS::EC2::InternetGateway",
+            "Properties": {
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": {
+                            "Ref": "AWS::StackId"
+                        }
+                    }
+                ]
+            }
+        },
+        "AttachGateway": {
+            "Type": "AWS::EC2::VPCGatewayAttachment",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "InternetGatewayId": {
+                    "Ref": "InternetGateway"
+                }
+            }
+        },
+        "RouteTable": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": {
+                            "Ref": "AWS::StackId"
+                        }
+                    }
+                ]
+            }
+        },
+        "Route": {
+            "Type": "AWS::EC2::Route",
+            "DependsOn": "AttachGateway",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "RouteTable"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "GatewayId": {
+                    "Ref": "InternetGateway"
+                }
+            }
+        },
+        "SubnetRouteTableAssociation": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "Subnet"
+                },
+                "RouteTableId": {
+                    "Ref": "RouteTable"
+                }
+            }
+        },
+        "NetworkAcl": {
+            "Type": "AWS::EC2::NetworkAcl",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": {
+                            "Ref": "AWS::StackId"
+                        }
+                    }
+                ]
+            }
+        },
+        "InboundHTTPNetworkAclEntry": {
+            "Type": "AWS::EC2::NetworkAclEntry",
+            "Properties": {
+                "NetworkAclId": {
+                    "Ref": "NetworkAcl"
+                },
+                "RuleNumber": 100,
+                "Protocol": 6,
+                "RuleAction": "allow",
+                "Egress": false,
+                "CidrBlock": "0.0.0.0/0",
+                "PortRange": {
+                    "From": 80,
+                    "To": 80
+                }
+            }
+        },
+        "InboundSSHNetworkAclEntry": {
+            "Type": "AWS::EC2::NetworkAclEntry",
+            "Properties": {
+                "NetworkAclId": {
+                    "Ref": "NetworkAcl"
+                },
+                "RuleNumber": 101,
+                "Protocol": 6,
+                "RuleAction": "allow",
+                "Egress": false,
+                "CidrBlock": "0.0.0.0/0",
+                "PortRange": {
+                    "From": 22,
+                    "To": 22
+                }
+            }
+        },
+        "InboundResponsePortsNetworkAclEntry": {
+            "Type": "AWS::EC2::NetworkAclEntry",
+            "Properties": {
+                "NetworkAclId": {
+                    "Ref": "NetworkAcl"
+                },
+                "RuleNumber": 102,
+                "Protocol": 6,
+                "RuleAction": "allow",
+                "Egress": false,
+                "CidrBlock": "0.0.0.0/0",
+                "PortRange": {
+                    "From": 1024,
+                    "To": 65535
+                }
+            }
+        },
+        "OutBoundHTTPNetworkAclEntry": {
+            "Type": "AWS::EC2::NetworkAclEntry",
+            "Properties": {
+                "NetworkAclId": {
+                    "Ref": "NetworkAcl"
+                },
+                "RuleNumber": 100,
+                "Protocol": 6,
+                "RuleAction": "allow",
+                "Egress": true,
+                "CidrBlock": "0.0.0.0/0",
+                "PortRange": {
+                    "From": 80,
+                    "To": 80
+                }
+            }
+        },
+        "OutBoundHTTPSNetworkAclEntry": {
+            "Type": "AWS::EC2::NetworkAclEntry",
+            "Properties": {
+                "NetworkAclId": {
+                    "Ref": "NetworkAcl"
+                },
+                "RuleNumber": 101,
+                "Protocol": 6,
+                "RuleAction": "allow",
+                "Egress": true,
+                "CidrBlock": "0.0.0.0/0",
+                "PortRange": {
+                    "From": 443,
+                    "To": 443
+                }
+            }
+        },
+        "OutBoundResponsePortsNetworkAclEntry": {
+            "Type": "AWS::EC2::NetworkAclEntry",
+            "Properties": {
+                "NetworkAclId": {
+                    "Ref": "NetworkAcl"
+                },
+                "RuleNumber": 102,
+                "Protocol": 6,
+                "RuleAction": "allow",
+                "Egress": true,
+                "CidrBlock": "0.0.0.0/0",
+                "PortRange": {
+                    "From": 1024,
+                    "To": 65535
+                }
+            }
+        },
+        "SubnetNetworkAclAssociation": {
+            "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "Subnet"
+                },
+                "NetworkAclId": {
+                    "Ref": "NetworkAcl"
+                }
+            }
+        },
+        "InstanceSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "GroupDescription": "Enable SSH access via port 22",
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 22,
+                        "ToPort": 22,
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 80,
+                        "ToPort": 80,
+                        "CidrIp": "0.0.0.0/0"
+                    }
+                ]
+            }
+        },
+        "LogRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "ec2.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyName": "LogRolePolicy",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "logs:Create*",
+                                        "logs:PutLogEvents",
+                                        "logs:Describe*"
+                                    ],
+                                    "Resource": [
+                                        "arn:aws:logs:*:*:*"
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "LogRoleInstanceProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Path": "/",
+                "Roles": [
+                    {
+                        "Ref": "LogRole"
+                    }
+                ]
+            }
+        },
+        "WebServerSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "Enable HTTP access via port 80 and SSH access via port 22",
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 80,
+                        "ToPort": 80,
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 22,
+                        "ToPort": 22,
+                        "CidrIp": "0.0.0.0/0"
+                    }
+                ]
+            }
+        },
+        "EC2Instance": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "ImageId": "%ami-43%",
+                "InstanceType": "t2.micro",
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": {
+                            "Ref": "AWS::StackId"
+                        }
+                    }
+                ],
+                "IamInstanceProfile": {
+                    "Ref": "LogRoleInstanceProfile"
+                },
+                "NetworkInterfaces": [
+                    {
+                        "GroupSet": [
+                            {
+                                "Ref": "InstanceSecurityGroup"
+                            }
+                        ],
+                        "AssociatePublicIpAddress": true,
+                        "DeviceIndex": "0",
+                        "DeleteOnTermination": true,
+                        "SubnetId": {
+                            "Ref": "Subnet"
+                        }
+                    }
+                ]
+            }
+        },
+        "VPCFlowLogsLogGroup": {
+            "Type": "AWS::Logs::LogGroup"
+        },
+        "EnableVpcFlowLogs": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Description": "Extract the VPC ID from the event and enable VPC Flow Logs.",
+                "Handler": "index.lambda_handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecutionRole",
+                        "Arn"
+                    ]
+                },
+                "Runtime": "python3.6",
+                "Timeout": 5,
+                "Environment": {
+                    "Variables": {
+                        "FLOWLOGS_GROUP_NAME": {
+                            "Ref": "VPCFlowLogsLogGroup"
+                        },
+                        "ROLE_ARN": {
+                            "Fn::GetAtt": [
+                                "DeliverVPCFlowLogsRole",
+                                "Arn"
+                            ]
+                        }
+                    }
+                },
+                "Code": {
+                    "ZipFile": "import boto3\nimport os\n\n\ndef lambda_handler(event, context):\n    '''\n    Extract the VPC ID from the event and enable VPC Flow Logs.\n    '''\n\n    try:\n        vpc_id = event['detail']['responseElements']['vpc']['vpcId']\n\n        print('VPC: ' + vpc_id)\n\n        ec2_client = boto3.client('ec2')\n\n        response = ec2_client.describe_flow_logs(\n            Filter=[\n                {\n                    'Name': 'resource-id',\n                    'Values': [\n                        vpc_id,\n                    ]\n                },\n            ],\n        )\n\n        if len(response[u'FlowLogs']) != 0:\n            print('VPC Flow Logs are ENABLED')\n        else:\n            print('VPC Flow Logs are DISABLED')\n\n            print('FLOWLOGS_GROUP_NAME: ' + os.environ['FLOWLOGS_GROUP_NAME'])\n            print('ROLE_ARN: ' + os.environ['ROLE_ARN'])\n\n            response = ec2_client.create_flow_logs(\n                ResourceIds=[vpc_id],\n                ResourceType='VPC',\n                TrafficType='ALL',\n                LogGroupName=os.environ['FLOWLOGS_GROUP_NAME'],\n                DeliverLogsPermissionArn=os.environ['ROLE_ARN'],\n            )\n\n            print('Created Flow Logs: ' + response['FlowLogIds'][0])\n\n    except Exception as e:\n        print('Error - reason \"%s\"' % str(e))\n"
+                }
+            }
+        },
+        "DeliverVPCFlowLogsRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "vpc-flow-logs.amazonaws.com"
+                                ]
+                            },
+                            "Action": "sts:AssumeRole"
+                        }
+                    ]
+                },
+                "Policies": [
+                    {
+                        "PolicyName": "flowlogs-policy",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "logs:CreateLogGroup",
+                                        "logs:CreateLogStream",
+                                        "logs:PutLogEvents",
+                                        "logs:DescribeLogGroups",
+                                        "logs:DescribeLogStreams"
+                                    ],
+                                    "Resource": "*"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "LambdaExecutionRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "lambda.amazonaws.com"
+                            },
+                            "Action": "sts:AssumeRole"
+                        }
+                    ]
+                }
+            }
+        },
+        "LambdaPolicy": {
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyName": "root",
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "iam:PassRole",
+                                "logs:*",
+                                "ec2:*"
+                            ],
+                            "Resource": "*"
+                        }
+                    ]
+                },
+                "Roles": [
+                    {
+                        "Ref": "LambdaExecutionRole"
+                    }
+                ]
+            }
+        },
+        "CloudTrailLogGroup": {
+            "Type": "AWS::Logs::LogGroup"
+        },
+        "CloudTrail": {
+            "Type": "AWS::CloudTrail::Trail",
+            "Properties": {
+                "IncludeGlobalServiceEvents": true,
+                "IsLogging": true,
+                "IsMultiRegionTrail": false,
+                "S3BucketName": {
+                    "Ref": "CloudTrailBucket"
+                },
+                "CloudWatchLogsLogGroupArn": {
+                    "Fn::GetAtt": [
+                        "CloudTrailLogGroup",
+                        "Arn"
+                    ]
+                },
+                "CloudWatchLogsRoleArn": {
+                    "Fn::GetAtt": [
+                        "CloudTrailRole",
+                        "Arn"
+                    ]
+                }
+            },
+            "DependsOn": [
+                "CloudTrailBucketPolicy"
+            ]
+        },
+        "CloudTrailRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Action": [
+                                "sts:AssumeRole"
+                            ],
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "cloudtrail.amazonaws.com"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                "Policies": [
+                    {
+                        "PolicyName": "logs",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "logs:*"
+                                    ],
+                                    "Resource": "*"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "CloudTrailBucket": {
+            "Type": "AWS::S3::Bucket"
+        },
+        "CloudTrailBucketPolicy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "Properties": {
+                "Bucket": {
+                    "Ref": "CloudTrailBucket"
+                },
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Sid": "AWSCloudTrailAclCheck",
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "cloudtrail.amazonaws.com"
+                            },
+                            "Action": "s3:GetBucketAcl",
+                            "Resource": {
+                                "Fn::GetAtt": [
+                                    "CloudTrailBucket",
+                                    "Arn"
+                                ]
+                            }
+                        },
+                        {
+                            "Sid": "AWSCloudTrailWrite",
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "cloudtrail.amazonaws.com"
+                            },
+                            "Action": "s3:PutObject",
+                            "Resource": {
+                                "Fn::Sub": "${CloudTrailBucket.Arn}/*"
+                            },
+                            "Condition": {
+                                "StringEquals": {
+                                    "s3:x-amz-acl": "bucket-owner-full-control"
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    },
+    "Outputs": {
+        "pubIpAddress1": {
+            "Description": "Public IP address of Web Server",
+            "Value": {
+                "Fn::GetAtt": [
+                    "EC2Instance",
+                    "PublicIp"
+                ]
+            }
+        },
+        "privIpAddress1": {
+            "Description": "Private IP address of Web Server",
+            "Value": {
+                "Fn::GetAtt": [
+                    "EC2Instance",
+                    "PrivateIp"
+                ]
+            }
+        }
+    }
+}

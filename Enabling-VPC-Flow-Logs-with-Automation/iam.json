@@ -1,0 +1,26 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "cloudformation:DescribeStackResources",
+                "cloudformation:DescribeStacks",
+                "cloudformation:ListStackResources",
+                "cloudtrail:*",
+                "cloudwatch:*",
+                "ec2:*",
+                "events:*",
+                "iam:GetRolePolicy",
+                "iam:ListAttachedRolePolicies",
+                "iam:ListRolePolicies",
+                "iam:ListRoles",
+                "kms:ListAliases",
+                "lambda:*",
+                "logs:*",
+                "tag:GetResources"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
