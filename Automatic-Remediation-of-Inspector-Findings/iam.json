@@ -24,6 +24,8 @@
                 "kms:ListAliases",
                 "lambda:*",
                 "logs:*",
+                "resource-groups:Get*",
+                "resource-groups:List*",
                 "sns:*",
                 "ssm:*",
                 "tag:GetResources"
