@@ -1,0 +1,19 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "CloudwatchFullAccess",
+            "Effect": "Allow",
+            "Action": [
+                "cloudwatch:*",
+                "events:*",
+                "ec2:*",
+                "elasticloadbalancing:*",
+                "autoscaling:*",
+                "sns:*",
+                "waf:*"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
