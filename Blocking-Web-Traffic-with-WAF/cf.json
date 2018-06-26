@@ -726,7 +726,7 @@
             "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
             "Properties": {
                 "HealthCheckIntervalSeconds": 10,
-                "HealthCheckPath": "/readme.html",
+                "HealthCheckPath": "/index.html",
                 "HealthCheckPort": "80",
                 "HealthCheckProtocol": "HTTP",
                 "HealthyThresholdCount": 2,
@@ -797,7 +797,7 @@
         "LaunchConfiguration": {
             "Type": "AWS::AutoScaling::LaunchConfiguration",
             "Properties": {
-                "ImageId": "ami-97785bed",
+                "ImageId": "%ami-43%",
                 "InstanceType": "t2.micro",
                 "IamInstanceProfile": {
                     "Ref": "WebInstanceProfile"
@@ -808,7 +808,12 @@
                     }
                 ],
                 "AssociatePublicIpAddress": false,
-                "InstanceMonitoring": true
+                "InstanceMonitoring": true,
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Sub": "#!/bin/bash\n/bin/echo '%password%' | /bin/passwd cloud_user --stdin\nyum update -y\nyum install -y httpd\necho '<html><body>We are Linux Academy!</body></html>' > /var/www/html/index.html\nservice httpd start\nchkconfig httpd on\nmkdir /home/cloud_user/.aws\necho -e '[default]\\nregion = us-east-1' > /home/cloud_user/.aws/config\n"
+                    }
+                }
             }
         },
         "AutoScalingGroup": {
@@ -852,22 +857,10 @@
                 "IamInstanceProfile": {
                     "Ref": "WebInstanceProfile"
                 },
-                "ImageId": "ami-97785bed",
+                "ImageId": "%ami-43%",
                 "UserData": {
                     "Fn::Base64": {
-                        "Fn::Join": [
-                            "",
-                            [
-                                "#!/bin/bash\n",
-                                "/bin/echo '%password%' | /bin/passwd cloud_user --stdin\n",
-                                "yum update -y\n",
-                                "yum install -y git\n",
-                                "mkdir /home/cloud_user/.aws\n",
-                                "git clone https://github.com/linuxacademy/content-aws-sysops-administrator.git\n",
-                                "cd content-aws-sysops-administrator/config/\n",
-                                "mv config /home/cloud_user/.aws/\n"
-                            ]
-                        ]
+                        "Fn::Sub": "#!/bin/bash\n/bin/echo '%password%' | /bin/passwd cloud_user --stdin\nyum update -y\nmkdir /home/cloud_user/.aws\necho -e '[default]\\nregion = us-east-1' > /home/cloud_user/.aws/config\n"
                     }
                 },
                 "NetworkInterfaces": [
@@ -1137,7 +1130,7 @@
             "DependsOn": "DMZNACL",
             "Properties": {
                 "NetworkAclId": {
-                    "Ref": "DMZNACL"
+                    "Ref": "DMZNACL2"
                 },
                 "RuleNumber": 100,
                 "Protocol": 6,
@@ -1173,7 +1166,7 @@
             "DependsOn": "DMZNACL2",
             "Properties": {
                 "NetworkAclId": {
-                    "Ref": "DMZNACL"
+                    "Ref": "DMZNACL2"
                 },
                 "RuleNumber": 120,
                 "Protocol": 6,
@@ -1191,7 +1184,7 @@
             "DependsOn": "DMZNACL2",
             "Properties": {
                 "NetworkAclId": {
-                    "Ref": "DMZNACL"
+                    "Ref": "DMZNACL2"
                 },
                 "RuleNumber": 130,
                 "Protocol": 6,
@@ -1234,22 +1227,10 @@
                 "IamInstanceProfile": {
                     "Ref": "WebInstanceProfile"
                 },
-                "ImageId": "ami-97785bed",
+                "ImageId": "%ami-43%",
                 "UserData": {
                     "Fn::Base64": {
-                        "Fn::Join": [
-                            "",
-                            [
-                                "#!/bin/bash\n",
-                                "/bin/echo '%password%' | /bin/passwd cloud_user --stdin\n",
-                                "yum update -y\n",
-                                "yum install -y git\n",
-                                "mkdir /home/cloud_user/.aws\n",
-                                "git clone https://github.com/linuxacademy/content-aws-sysops-administrator.git\n",
-                                "cd content-aws-sysops-administrator/config/\n",
-                                "mv config /home/cloud_user/.aws/\n"
-                            ]
-                        ]
+                        "Fn::Sub": "#!/bin/bash\n/bin/echo '%password%' | /bin/passwd cloud_user --stdin\nyum update -y\nmkdir /home/cloud_user/.aws\necho -e '[default]\\nregion = us-east-1' > /home/cloud_user/.aws/config\n"
                     }
                 },
                 "NetworkInterfaces": [
@@ -1272,6 +1253,44 @@
                         "Value": "bastion-host-vpc2",
                         "Key": "Name"
                     }
+                ]
+            }
+        }
+    },
+    "Outputs": {
+        "pubIpAddress1": {
+            "Description": "Public IP address of Web Server",
+            "Value": {
+                "Fn::GetAtt": [
+                    "BastionInstance",
+                    "PublicIp"
+                ]
+            }
+        },
+        "privIpAddress1": {
+            "Description": "Private IP address of Web Server",
+            "Value": {
+                "Fn::GetAtt": [
+                    "BastionInstance",
+                    "PrivateIp"
+                ]
+            }
+        },
+        "pubIpAddress2": {
+            "Description": "Public IP address of Web Server",
+            "Value": {
+                "Fn::GetAtt": [
+                    "BastionInstance2",
+                    "PublicIp"
+                ]
+            }
+        },
+        "privIpAddress2": {
+            "Description": "Private IP address of Web Server",
+            "Value": {
+                "Fn::GetAtt": [
+                    "BastionInstance2",
+                    "PrivateIp"
                 ]
             }
         }

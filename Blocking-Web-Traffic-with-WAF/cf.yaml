@@ -467,7 +467,7 @@ Resources:
     Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
     Properties:
       HealthCheckIntervalSeconds: 10
-      HealthCheckPath: /readme.html
+      HealthCheckPath: /index.html
       HealthCheckPort: "80"
       HealthCheckProtocol: "HTTP"
       HealthyThresholdCount: 2
@@ -515,13 +515,24 @@ Resources:
   LaunchConfiguration:
     Type: "AWS::AutoScaling::LaunchConfiguration"
     Properties:
-      ImageId: ami-97785bed
+      ImageId: '%ami-43%'
       InstanceType: "t2.micro"
       IamInstanceProfile: !Ref WebInstanceProfile
       SecurityGroups:
         - !Ref WebServerSecurityGroup
       AssociatePublicIpAddress: false
       InstanceMonitoring: true
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          /bin/echo '%password%' | /bin/passwd cloud_user --stdin
+          yum update -y
+          yum install -y httpd
+          echo '<html><body>We are Linux Academy!</body></html>' > /var/www/html/index.html
+          service httpd start
+          chkconfig httpd on
+          mkdir /home/cloud_user/.aws
+          echo -e '[default]\nregion = us-east-1' > /home/cloud_user/.aws/config
 
   AutoScalingGroup:
     Type: "AWS::AutoScaling::AutoScalingGroup"
@@ -529,10 +540,10 @@ Resources:
       TargetGroupARNs:
         - !Ref TargetGroup
       LaunchConfigurationName: !Ref LaunchConfiguration
-      MinSize: "2"
-      MaxSize: "2"
-      DesiredCapacity: "2"
-      Cooldown: "300"
+      MinSize: '2'
+      MaxSize: '2'
+      DesiredCapacity: '2'
+      Cooldown: '300'
       HealthCheckGracePeriod: 300
       HealthCheckType: "ELB"
       VPCZoneIdentifier:
@@ -548,20 +559,14 @@ Resources:
     Properties:
       InstanceType: t2.micro
       IamInstanceProfile: !Ref WebInstanceProfile
-      ImageId: 'ami-97785bed'
-      UserData: !Base64
-        'Fn::Join':
-          - ''
-          - [
-              "#!/bin/bash\n",
-              "/bin/echo '%password%' | /bin/passwd cloud_user --stdin\n",
-              "yum update -y\n",
-              "yum install -y git\n",
-              "mkdir /home/cloud_user/.aws\n",
-              "git clone https://github.com/linuxacademy/content-aws-sysops-administrator.git\n",
-              "cd content-aws-sysops-administrator/config/\n",
-              "mv config /home/cloud_user/.aws/\n"
-          ]
+      ImageId: '%ami-43%'
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          /bin/echo '%password%' | /bin/passwd cloud_user --stdin
+          yum update -y
+          mkdir /home/cloud_user/.aws
+          echo -e '[default]\nregion = us-east-1' > /home/cloud_user/.aws/config
       NetworkInterfaces:
         - GroupSet:
             - !Ref BastionSecurityGroup
@@ -724,7 +729,7 @@ Resources:
     Type: "AWS::EC2::NetworkAclEntry"
     DependsOn: DMZNACL
     Properties:
-      NetworkAclId: !Ref DMZNACL
+      NetworkAclId: !Ref DMZNACL2
       RuleNumber: 100
       Protocol: 6
       PortRange:
@@ -752,7 +757,7 @@ Resources:
     Type: "AWS::EC2::NetworkAclEntry"
     DependsOn: DMZNACL2
     Properties:
-      NetworkAclId: !Ref DMZNACL
+      NetworkAclId: !Ref DMZNACL2
       RuleNumber: 120
       Protocol: 6
       PortRange:
@@ -766,7 +771,7 @@ Resources:
     Type: "AWS::EC2::NetworkAclEntry"
     DependsOn: DMZNACL2
     Properties:
-      NetworkAclId: !Ref DMZNACL
+      NetworkAclId: !Ref DMZNACL2
       RuleNumber: 130
       Protocol: 6
       PortRange:
@@ -795,21 +800,14 @@ Resources:
     Properties:
       InstanceType: t2.micro
       IamInstanceProfile: !Ref WebInstanceProfile
-      ImageId: 'ami-97785bed'
-      UserData: !Base64
-        'Fn::Join':
-          - ''
-          - [
-              "#!/bin/bash\n",
-              "/bin/echo '%password%' | /bin/passwd cloud_user --stdin\n",
-              "yum update -y\n",
-              "yum install -y git\n",
-              "mkdir /home/cloud_user/.aws\n",
-              "git clone https://github.com/linuxacademy/content-aws-sysops-administrator.git\n",
-              "cd content-aws-sysops-administrator/config/\n",
-              "mv config /home/cloud_user/.aws/\n"
-              #TODO ADD APACHE
-          ]
+      ImageId: '%ami-43%'
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          /bin/echo '%password%' | /bin/passwd cloud_user --stdin
+          yum update -y
+          mkdir /home/cloud_user/.aws
+          echo -e '[default]\nregion = us-east-1' > /home/cloud_user/.aws/config
       NetworkInterfaces:
         - GroupSet:
             - !Ref BastionSecurityGroup2
@@ -820,3 +818,18 @@ Resources:
       Tags:
         - Value: bastion-host-vpc2
           Key: Name
+
+
+Outputs:
+  pubIpAddress1:
+    Description: Public IP address of Web Server
+    Value: !GetAtt BastionInstance.PublicIp
+  privIpAddress1:
+    Description: Private IP address of Web Server
+    Value: !GetAtt BastionInstance.PrivateIp
+  pubIpAddress2:
+    Description: Public IP address of Web Server
+    Value: !GetAtt BastionInstance2.PublicIp
+  privIpAddress2:
+    Description: Private IP address of Web Server
+    Value: !GetAtt BastionInstance2.PrivateIp
