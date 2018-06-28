@@ -280,8 +280,8 @@
                         }
                     },
                     {
-                        "Key": "Name",
-                        "Value": "Inspector-Lab"
+                        "Key": "Environment",
+                        "Value": "Production"
                     }
                 ],
                 "IamInstanceProfile": {

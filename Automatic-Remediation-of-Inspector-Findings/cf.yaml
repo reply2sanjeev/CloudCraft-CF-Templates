@@ -186,8 +186,8 @@ Resources:
       Tags:
         - Key: Application
           Value: !Ref 'AWS::StackId'
-        - Key: Name
-          Value: Inspector-Lab
+        - Key: Environment
+          Value: Production
       IamInstanceProfile:
         Ref: SSMInstanceProfile
       NetworkInterfaces:
