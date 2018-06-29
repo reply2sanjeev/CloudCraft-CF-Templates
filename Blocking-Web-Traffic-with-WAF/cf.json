@@ -1,6 +1,6 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "AWS Security Specialty Lab VPC",
+    "Description": "Blocking Web Traffic with WAF",
     "Resources": {
         "VPC": {
             "Type": "AWS::EC2::VPC",
@@ -43,7 +43,7 @@
             "Properties": {
                 "AvailabilityZone": {
                     "Fn::Select": [
-                        "0",
+                        0,
                         {
                             "Fn::GetAZs": ""
                         }
@@ -66,7 +66,7 @@
             "Properties": {
                 "AvailabilityZone": {
                     "Fn::Select": [
-                        "1",
+                        1,
                         {
                             "Fn::GetAZs": ""
                         }
@@ -89,7 +89,7 @@
             "Properties": {
                 "AvailabilityZone": {
                     "Fn::Select": [
-                        "0",
+                        0,
                         {
                             "Fn::GetAZs": ""
                         }
@@ -112,7 +112,7 @@
             "Properties": {
                 "AvailabilityZone": {
                     "Fn::Select": [
-                        "1",
+                        1,
                         {
                             "Fn::GetAZs": ""
                         }
@@ -600,7 +600,7 @@
         "BastionSecurityGroup": {
             "Type": "AWS::EC2::SecurityGroup",
             "Properties": {
-                "GroupDescription": "wordpress-bastion",
+                "GroupDescription": "bastion",
                 "VpcId": {
                     "Ref": "VPC"
                 },
@@ -623,7 +623,7 @@
         "LoadBalancerSecurityGroup": {
             "Type": "AWS::EC2::SecurityGroup",
             "Properties": {
-                "GroupDescription": "wordpress-elb",
+                "GroupDescription": "apache-elb",
                 "VpcId": {
                     "Ref": "VPC"
                 },
@@ -652,7 +652,7 @@
         "WebServerSecurityGroup": {
             "Type": "AWS::EC2::SecurityGroup",
             "Properties": {
-                "GroupDescription": "wordpress-ec2",
+                "GroupDescription": "apache-ec2",
                 "VpcId": {
                     "Ref": "VPC"
                 },
@@ -844,7 +844,7 @@
                 "Tags": [
                     {
                         "PropagateAtLaunch": true,
-                        "Value": "instance-wordpress",
+                        "Value": "instance-apache",
                         "Key": "Name"
                     }
                 ]
@@ -927,7 +927,7 @@
             "Properties": {
                 "AvailabilityZone": {
                     "Fn::Select": [
-                        "0",
+                        0,
                         {
                             "Fn::GetAZs": ""
                         }
@@ -941,29 +941,6 @@
                     {
                         "Key": "Name",
                         "Value": "DMZ1public2"
-                    }
-                ]
-            }
-        },
-        "DMZ2public2": {
-            "Type": "AWS::EC2::Subnet",
-            "Properties": {
-                "AvailabilityZone": {
-                    "Fn::Select": [
-                        "1",
-                        {
-                            "Fn::GetAZs": ""
-                        }
-                    ]
-                },
-                "CidrBlock": "10.111.2.0/24",
-                "VpcId": {
-                    "Ref": "VPC2"
-                },
-                "Tags": [
-                    {
-                        "Key": "Name",
-                        "Value": "DMZ2public2"
                     }
                 ]
             }
@@ -987,17 +964,6 @@
             "Properties": {
                 "SubnetId": {
                     "Ref": "DMZ1public2"
-                },
-                "RouteTableId": {
-                    "Ref": "PublicRT2"
-                }
-            }
-        },
-        "RouteTableAssociation2B": {
-            "Type": "AWS::EC2::SubnetRouteTableAssociation",
-            "Properties": {
-                "SubnetId": {
-                    "Ref": "DMZ2public2"
                 },
                 "RouteTableId": {
                     "Ref": "PublicRT2"
@@ -1036,17 +1002,6 @@
             "Properties": {
                 "SubnetId": {
                     "Ref": "DMZ1public2"
-                },
-                "NetworkAclId": {
-                    "Ref": "DMZNACL2"
-                }
-            }
-        },
-        "SubnetNetworkAclAssociation2B": {
-            "Type": "AWS::EC2::SubnetNetworkAclAssociation",
-            "Properties": {
-                "SubnetId": {
-                    "Ref": "DMZ2public2"
                 },
                 "NetworkAclId": {
                     "Ref": "DMZNACL2"
@@ -1200,7 +1155,7 @@
         "BastionSecurityGroup2": {
             "Type": "AWS::EC2::SecurityGroup",
             "Properties": {
-                "GroupDescription": "wordpress-bastion",
+                "GroupDescription": "bastion",
                 "VpcId": {
                     "Ref": "VPC2"
                 },
@@ -1250,7 +1205,7 @@
                 ],
                 "Tags": [
                     {
-                        "Value": "bastion-host-vpc2",
+                        "Value": "internet-host",
                         "Key": "Name"
                     }
                 ]
@@ -1259,25 +1214,7 @@
     },
     "Outputs": {
         "pubIpAddress1": {
-            "Description": "Public IP address of Web Server",
-            "Value": {
-                "Fn::GetAtt": [
-                    "BastionInstance",
-                    "PublicIp"
-                ]
-            }
-        },
-        "privIpAddress1": {
-            "Description": "Private IP address of Web Server",
-            "Value": {
-                "Fn::GetAtt": [
-                    "BastionInstance",
-                    "PrivateIp"
-                ]
-            }
-        },
-        "pubIpAddress2": {
-            "Description": "Public IP address of Web Server",
+            "Description": "Public IP address of Bastion",
             "Value": {
                 "Fn::GetAtt": [
                     "BastionInstance2",
@@ -1285,12 +1222,12 @@
                 ]
             }
         },
-        "privIpAddress2": {
-            "Description": "Private IP address of Web Server",
+        "loadbalancer": {
+            "Description": "Load Balancer DNS Name",
             "Value": {
                 "Fn::GetAtt": [
-                    "BastionInstance2",
-                    "PrivateIp"
+                    "LoadBalancer",
+                    "DNSName"
                 ]
             }
         }

@@ -5,13 +5,15 @@
             "Sid": "CloudwatchFullAccess",
             "Effect": "Allow",
             "Action": [
+                "autoscaling:*",
+                "cloudfront:*",
                 "cloudwatch:*",
-                "events:*",
                 "ec2:*",
                 "elasticloadbalancing:*",
-                "autoscaling:*",
+                "events:*",
                 "sns:*",
-                "waf:*"
+                "waf:*",
+                "waf-regional:*"
             ],
             "Resource": "*"
         }
