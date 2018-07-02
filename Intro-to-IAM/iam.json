@@ -1,0 +1,43 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:GenerateCredentialReport",
+                "iam:GenerateServiceLastAccessedDetails",
+                "iam:Get*",
+                "iam:List*",
+                "iam:SimulateCustomPolicy",
+                "iam:SimulatePrincipalPolicy"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Deny",
+            "Action": [
+                "iam:ListRolePolicies",
+                "iam:ListRoles",
+                "iam:ListPolicies"
+            ],
+             "Resource": "*"
+        },
+        {
+	        "Effect": "Allow",
+		    "Action": [
+		      "iam:AttachGroupPolicy",
+		      "iam:AddUserToGroup",
+		      "iam:RemoveUserFromGroup"
+		    ],
+		    "Resource": [
+		      "arn:aws:iam::*:group/EC2-Support",
+                "arn:aws:iam::*:group/EC2-Admin",
+                "arn:aws:iam::*:group/S3-Support",
+                "arn:aws:iam::*:user/user-1",
+                "arn:aws:iam::*:user/user-2",
+                "arn:aws:iam::*:user/user-3"
+
+   		    ]
+        }
+    ]
+}
