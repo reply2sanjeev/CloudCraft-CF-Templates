@@ -1,0 +1,88 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "GroupDeny",
+            "Effect": "Deny",
+            "Action": [
+                "ec2:CreateReservedInstancesListing",
+                "ec2:RequestSpotInstances",
+                "ec2:PurchaseReservedInstancesOffering",
+                "ec2:PurchaseScheduledInstances",
+                "ec2:RunScheduledInstances",
+                "directconnect:*",
+                "route53domains:*",
+                "redshift:PurchaseReservedNodeOffering",
+                "lightsail:*",
+                "aws-portal:ModifyBilling",
+                "budgets:ModifyBudget",
+                "ec2:PurchaseReservedInstancesOffering",
+                "dynamodb:RestoreTableFromBackup",
+                "rds:PurchaseReservedInstancesOffering",
+                "route53:EnableDomainAutoRenew",
+                "route53:DeleteHostedZone"
+            ],
+            "Resource": [
+                "*"
+            ]
+        },
+        {
+            "Sid": "Stmt13919000",
+            "Effect": "Deny",
+            "Action": [
+                "rds:CreateDBInstance"
+            ],
+            "Resource": [
+                "*"
+            ],
+            "Condition": {
+                "StringNotEquals": {
+                    "rds:DatabaseClass": [
+                        "db.t2.micro",
+                        "db.t2.small",
+                        "db.t2.nano",
+                        "db.t2.medium"
+                    ]
+                }
+            }
+        },
+        {
+            "Sid": "GroupDenyG2InstancesFromBeingCreated",
+            "Effect": "Deny",
+            "Action": "ec2:RunInstances",
+            "Resource": [
+                "arn:aws:ec2:*:*:instance/*"
+            ],
+            "Condition": {
+                "StringNotEquals": {
+                    "ec2:InstanceType": [
+                        "t1.micro",
+                        "t2.nano",
+                        "t2.micro",
+                        "t2.small",
+                        "c1.medium"
+                    ]
+                }
+            }
+        },
+        {
+            "Effect": "Deny",
+            "Action": "autoscaling:CreateLaunchConfiguration",
+            "Resource": [
+                "*"
+            ],
+            "Condition": {
+                "StringNotEquals": {
+                    "autoscaling:InstanceType": [
+                        "t1.micro",
+                        "t2.nano",
+                        "t2.micro",
+                        "t2.small",
+                        "i3.large",
+                        "t2.medium"
+                    ]
+                }
+            }
+        }
+    ]
+}
