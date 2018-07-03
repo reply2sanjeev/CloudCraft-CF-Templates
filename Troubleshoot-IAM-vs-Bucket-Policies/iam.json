@@ -21,7 +21,6 @@
             "Effect": "Deny",
             "Action": [
                 "iam:ListRolePolicies",
-                "iam:ListRoles",
                 "iam:ListPolicies"
             ],
              "Resource": "*"
@@ -133,7 +132,6 @@
                 "iam:CreateOpenIDConnectProvider",
                 "iam:UploadServerCertificate",
                 "iam:ListPolicyVersions",
-                "iam:ListUsers",
                 "iam:UpdateSigningCertificate",
                 "iam:DeleteGroupPolicy",
                 "iam:DeletePolicyVersion"

@@ -15,8 +15,8 @@
         "VPC": {
             "Type": "AWS::EC2::VPC",
             "Properties": {
-                "EnableDnsSupport": "true",
-                "EnableDnsHostnames": "true",
+                "EnableDnsSupport": true,
+                "EnableDnsHostnames": true,
                 "CidrBlock": {
                     "Fn::FindInMap": [
                         "SubnetConfig",
@@ -171,14 +171,14 @@
                 "NetworkAclId": {
                     "Ref": "PublicNetworkAcl"
                 },
-                "RuleNumber": "100",
-                "Protocol": "6",
+                "RuleNumber": 100,
+                "Protocol": 6,
                 "RuleAction": "allow",
-                "Egress": "false",
+                "Egress": false,
                 "CidrBlock": "0.0.0.0/0",
                 "PortRange": {
-                    "From": "80",
-                    "To": "80"
+                    "From": 80,
+                    "To": 80
                 }
             }
         },
@@ -188,14 +188,14 @@
                 "NetworkAclId": {
                     "Ref": "PublicNetworkAcl"
                 },
-                "RuleNumber": "101",
-                "Protocol": "6",
+                "RuleNumber": 101,
+                "Protocol": 6,
                 "RuleAction": "allow",
-                "Egress": "false",
+                "Egress": false,
                 "CidrBlock": "0.0.0.0/0",
                 "PortRange": {
-                    "From": "443",
-                    "To": "443"
+                    "From": 443,
+                    "To": 443
                 }
             }
         },
@@ -205,14 +205,14 @@
                 "NetworkAclId": {
                     "Ref": "PublicNetworkAcl"
                 },
-                "RuleNumber": "102",
-                "Protocol": "6",
+                "RuleNumber": 102,
+                "Protocol": 6,
                 "RuleAction": "allow",
-                "Egress": "false",
+                "Egress": false,
                 "CidrBlock": "0.0.0.0/0",
                 "PortRange": {
-                    "From": "22",
-                    "To": "22"
+                    "From": 22,
+                    "To": 22
                 }
             }
         },
@@ -222,14 +222,14 @@
                 "NetworkAclId": {
                     "Ref": "PublicNetworkAcl"
                 },
-                "RuleNumber": "103",
-                "Protocol": "6",
+                "RuleNumber": 103,
+                "Protocol": 6,
                 "RuleAction": "allow",
-                "Egress": "false",
+                "Egress": false,
                 "CidrBlock": "0.0.0.0/0",
                 "PortRange": {
-                    "From": "1024",
-                    "To": "65535"
+                    "From": 1024,
+                    "To": 65535
                 }
             }
         },
@@ -239,14 +239,14 @@
                 "NetworkAclId": {
                     "Ref": "PublicNetworkAcl"
                 },
-                "RuleNumber": "100",
-                "Protocol": "6",
+                "RuleNumber": 100,
+                "Protocol": 6,
                 "RuleAction": "allow",
-                "Egress": "true",
+                "Egress": true,
                 "CidrBlock": "0.0.0.0/0",
                 "PortRange": {
-                    "From": "0",
-                    "To": "65535"
+                    "From": 0,
+                    "To": 65535
                 }
             }
         },
@@ -277,8 +277,8 @@
                     "Ref": "EC2SecurityGroup"
                 },
                 "IpProtocol": "tcp",
-                "FromPort": "22",
-                "ToPort": "22",
+                "FromPort": 22,
+                "ToPort": 22,
                 "CidrIp": "0.0.0.0/0"
             }
         },
@@ -346,7 +346,7 @@
                 },
                 "NetworkInterfaces": [
                     {
-                        "AssociatePublicIpAddress": "true",
+                        "AssociatePublicIpAddress": true,
                         "DeviceIndex": "0",
                         "PrivateIpAddress": "10.0.0.100",
                         "GroupSet": [
@@ -377,6 +377,48 @@
                     "Password": "123456"
                 },
                 "UserName": "user-2"
+            }
+        },
+        "UserPolicy": {
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyName": "UserPolicy",
+                "PolicyDocument": {
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "s3:*",
+                                "iam:List*"
+                            ],
+                            "Resource": "*"
+                        }
+                    ]
+                },
+                "Groups": [
+                    {
+                        "Ref": "UserGroup"
+                    }
+                ]
+            }
+        },
+        "UserGroup": {
+            "Type": "AWS::IAM::Group"
+        },
+        "Users": {
+            "Type": "AWS::IAM::UserToGroupAddition",
+            "Properties": {
+                "GroupName": {
+                    "Ref": "UserGroup"
+                },
+                "Users": [
+                    {
+                        "Ref": "User1"
+                    },
+                    {
+                        "Ref": "User2"
+                    }
+                ]
             }
         }
     },
