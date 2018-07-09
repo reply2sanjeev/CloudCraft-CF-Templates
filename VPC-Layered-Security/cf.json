@@ -982,18 +982,13 @@
                 ]
             }
         },
-        "Database": {
-            "Type": "AWS::RDS::DBInstance",
+        "DatabaseCluster": {
+            "Type": "AWS::RDS::DBCluster",
             "Properties": {
-                "AllocatedStorage": "20",
-                "BackupRetentionPeriod": "0",
-                "DBInstanceClass": "db.t2.medium",
-                "DBInstanceIdentifier": "wordpress-database",
-                "Engine": "Aurora",
-                "CopyTagsToSnapshot": true,
+                "Engine": "aurora",
                 "MasterUsername": "wpuser",
                 "MasterUserPassword": "Password1",
-                "VPCSecurityGroups": [
+                "VpcSecurityGroupIds": [
                     {
                         "Fn::GetAtt": [
                             "DatabaseSecurityGroup",
@@ -1003,9 +998,20 @@
                 ],
                 "DBSubnetGroupName": {
                     "Ref": "DBSubnetGroup"
+                }
+            }
+        },
+        "DatabasePrimaryInstance": {
+            "Type": "AWS::RDS::DBInstance",
+            "Properties": {
+                "Engine": "aurora",
+                "DBClusterIdentifier": {
+                    "Ref": "DatabaseCluster"
                 },
-                "MultiAZ": true,
-                "StorageType": "gp2"
+                "DBInstanceClass": "db.t2.medium",
+                "DBSubnetGroupName": {
+                    "Ref": "DBSubnetGroup"
+                }
             }
         },
         "DBSubnetGroup": {
