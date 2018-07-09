@@ -183,41 +183,6 @@
                 ]
             }
         },
-        "RouteTableAssociationA": {
-            "Type": "AWS::EC2::SubnetRouteTableAssociation",
-            "Properties": {
-                "SubnetId": {
-                    "Ref": "DMZ1public"
-                },
-                "RouteTableId": {
-                    "Ref": "PublicRT"
-                }
-            }
-        },
-        "RouteTableAssociationB": {
-            "Type": "AWS::EC2::SubnetRouteTableAssociation",
-            "Properties": {
-                "SubnetId": {
-                    "Ref": "DMZ2public"
-                },
-                "RouteTableId": {
-                    "Ref": "PublicRT"
-                }
-            }
-        },
-        "RoutePublicNATToInternet": {
-            "Type": "AWS::EC2::Route",
-            "Properties": {
-                "RouteTableId": {
-                    "Ref": "PublicRT"
-                },
-                "DestinationCidrBlock": "0.0.0.0/0",
-                "GatewayId": {
-                    "Ref": "InternetGateway"
-                }
-            },
-            "DependsOn": "VPCGatewayAttachment"
-        },
         "NATElasticIP": {
             "Type": "AWS::EC2::EIP",
             "Properties": {
@@ -240,18 +205,6 @@
                 }
             }
         },
-        "NATGatewayRoute": {
-            "Type": "AWS::EC2::Route",
-            "Properties": {
-                "RouteTableId": {
-                    "Ref": "PrivateRT"
-                },
-                "DestinationCidrBlock": "0.0.0.0/0",
-                "NatGatewayId": {
-                    "Ref": "NATGateway"
-                }
-            }
-        },
         "PrivateRT": {
             "Type": "AWS::EC2::RouteTable",
             "Properties": {
@@ -264,50 +217,6 @@
                         "Value": "PrivateRT"
                     }
                 ]
-            }
-        },
-        "RouteTableAssociationC": {
-            "Type": "AWS::EC2::SubnetRouteTableAssociation",
-            "Properties": {
-                "SubnetId": {
-                    "Ref": "AppLayer1private"
-                },
-                "RouteTableId": {
-                    "Ref": "PrivateRT"
-                }
-            }
-        },
-        "RouteTableAssociationD": {
-            "Type": "AWS::EC2::SubnetRouteTableAssociation",
-            "Properties": {
-                "SubnetId": {
-                    "Ref": "AppLayer2private"
-                },
-                "RouteTableId": {
-                    "Ref": "PrivateRT"
-                }
-            }
-        },
-        "RouteTableAssociationE": {
-            "Type": "AWS::EC2::SubnetRouteTableAssociation",
-            "Properties": {
-                "SubnetId": {
-                    "Ref": "DBLayer1private"
-                },
-                "RouteTableId": {
-                    "Ref": "PrivateRT"
-                }
-            }
-        },
-        "RouteTableAssociationF": {
-            "Type": "AWS::EC2::SubnetRouteTableAssociation",
-            "Properties": {
-                "SubnetId": {
-                    "Ref": "DBLayer2private"
-                },
-                "RouteTableId": {
-                    "Ref": "PrivateRT"
-                }
             }
         },
         "DMZNACL": {
@@ -324,172 +233,6 @@
                 ]
             }
         },
-        "SubnetNetworkAclAssociationA": {
-            "Type": "AWS::EC2::SubnetNetworkAclAssociation",
-            "Properties": {
-                "SubnetId": {
-                    "Ref": "DMZ1public"
-                },
-                "NetworkAclId": {
-                    "Ref": "DMZNACL"
-                }
-            }
-        },
-        "SubnetNetworkAclAssociationB": {
-            "Type": "AWS::EC2::SubnetNetworkAclAssociation",
-            "Properties": {
-                "SubnetId": {
-                    "Ref": "DMZ2public"
-                },
-                "NetworkAclId": {
-                    "Ref": "DMZNACL"
-                }
-            }
-        },
-        "DMZNACLEntryIngress100": {
-            "Type": "AWS::EC2::NetworkAclEntry",
-            "DependsOn": "DMZNACL",
-            "Properties": {
-                "NetworkAclId": {
-                    "Ref": "DMZNACL"
-                },
-                "RuleNumber": 100,
-                "Protocol": 6,
-                "PortRange": {
-                    "From": 22,
-                    "To": 22
-                },
-                "RuleAction": "allow",
-                "Egress": false,
-                "CidrBlock": "0.0.0.0/0"
-            }
-        },
-        "DMZNACLEntryIngress110": {
-            "Type": "AWS::EC2::NetworkAclEntry",
-            "DependsOn": "DMZNACL",
-            "Properties": {
-                "NetworkAclId": {
-                    "Ref": "DMZNACL"
-                },
-                "RuleNumber": 110,
-                "Protocol": 6,
-                "PortRange": {
-                    "From": 80,
-                    "To": 80
-                },
-                "RuleAction": "allow",
-                "Egress": false,
-                "CidrBlock": "0.0.0.0/0"
-            }
-        },
-        "DMZNACLEntryIngress120": {
-            "Type": "AWS::EC2::NetworkAclEntry",
-            "DependsOn": "DMZNACL",
-            "Properties": {
-                "NetworkAclId": {
-                    "Ref": "DMZNACL"
-                },
-                "RuleNumber": 120,
-                "Protocol": 6,
-                "PortRange": {
-                    "From": 443,
-                    "To": 443
-                },
-                "RuleAction": "allow",
-                "Egress": false,
-                "CidrBlock": "0.0.0.0/0"
-            }
-        },
-        "DMZNACLEntryIngress130": {
-            "Type": "AWS::EC2::NetworkAclEntry",
-            "DependsOn": "DMZNACL",
-            "Properties": {
-                "NetworkAclId": {
-                    "Ref": "DMZNACL"
-                },
-                "RuleNumber": 130,
-                "Protocol": 6,
-                "PortRange": {
-                    "From": 1024,
-                    "To": 65535
-                },
-                "RuleAction": "allow",
-                "Egress": false,
-                "CidrBlock": "0.0.0.0/0"
-            }
-        },
-        "DMZNACLEntryEgress100": {
-            "Type": "AWS::EC2::NetworkAclEntry",
-            "DependsOn": "DMZNACL",
-            "Properties": {
-                "NetworkAclId": {
-                    "Ref": "DMZNACL"
-                },
-                "RuleNumber": 100,
-                "Protocol": 6,
-                "PortRange": {
-                    "From": 22,
-                    "To": 22
-                },
-                "RuleAction": "allow",
-                "Egress": true,
-                "CidrBlock": "0.0.0.0/0"
-            }
-        },
-        "DMZNACLEntryEgress110": {
-            "Type": "AWS::EC2::NetworkAclEntry",
-            "DependsOn": "DMZNACL",
-            "Properties": {
-                "NetworkAclId": {
-                    "Ref": "DMZNACL"
-                },
-                "RuleNumber": 110,
-                "Protocol": 6,
-                "PortRange": {
-                    "From": 80,
-                    "To": 80
-                },
-                "RuleAction": "allow",
-                "Egress": true,
-                "CidrBlock": "0.0.0.0/0"
-            }
-        },
-        "DMZNACLEntryEgress120": {
-            "Type": "AWS::EC2::NetworkAclEntry",
-            "DependsOn": "DMZNACL",
-            "Properties": {
-                "NetworkAclId": {
-                    "Ref": "DMZNACL"
-                },
-                "RuleNumber": 120,
-                "Protocol": 6,
-                "PortRange": {
-                    "From": 443,
-                    "To": 443
-                },
-                "RuleAction": "allow",
-                "Egress": true,
-                "CidrBlock": "0.0.0.0/0"
-            }
-        },
-        "DMZNACLEntryEgress130": {
-            "Type": "AWS::EC2::NetworkAclEntry",
-            "DependsOn": "DMZNACL",
-            "Properties": {
-                "NetworkAclId": {
-                    "Ref": "DMZNACL"
-                },
-                "RuleNumber": 130,
-                "Protocol": 6,
-                "PortRange": {
-                    "From": 1024,
-                    "To": 65535
-                },
-                "RuleAction": "allow",
-                "Egress": true,
-                "CidrBlock": "0.0.0.0/0"
-            }
-        },
         "AppNACL": {
             "Type": "AWS::EC2::NetworkAcl",
             "Properties": {
@@ -504,154 +247,6 @@
                 ]
             }
         },
-        "SubnetNetworkAclAssociationC": {
-            "Type": "AWS::EC2::SubnetNetworkAclAssociation",
-            "Properties": {
-                "SubnetId": {
-                    "Ref": "AppLayer1private"
-                },
-                "NetworkAclId": {
-                    "Ref": "AppNACL"
-                }
-            }
-        },
-        "SubnetNetworkAclAssociationD": {
-            "Type": "AWS::EC2::SubnetNetworkAclAssociation",
-            "Properties": {
-                "SubnetId": {
-                    "Ref": "AppLayer2private"
-                },
-                "NetworkAclId": {
-                    "Ref": "AppNACL"
-                }
-            }
-        },
-        "AppNACLEntryIngress100": {
-            "Type": "AWS::EC2::NetworkAclEntry",
-            "DependsOn": "AppNACL",
-            "Properties": {
-                "NetworkAclId": {
-                    "Ref": "AppNACL"
-                },
-                "RuleNumber": 100,
-                "Protocol": 6,
-                "PortRange": {
-                    "From": 22,
-                    "To": 22
-                },
-                "RuleAction": "allow",
-                "Egress": false,
-                "CidrBlock": "10.99.0.0/16"
-            }
-        },
-        "AppNACLEntryIngress110": {
-            "Type": "AWS::EC2::NetworkAclEntry",
-            "DependsOn": "AppNACL",
-            "Properties": {
-                "NetworkAclId": {
-                    "Ref": "AppNACL"
-                },
-                "RuleNumber": 110,
-                "Protocol": 6,
-                "PortRange": {
-                    "From": 80,
-                    "To": 80
-                },
-                "RuleAction": "allow",
-                "Egress": false,
-                "CidrBlock": "10.99.0.0/16"
-            }
-        },
-        "AppNACLEntryIngress120": {
-            "Type": "AWS::EC2::NetworkAclEntry",
-            "DependsOn": "AppNACL",
-            "Properties": {
-                "NetworkAclId": {
-                    "Ref": "AppNACL"
-                },
-                "RuleNumber": 120,
-                "Protocol": 6,
-                "PortRange": {
-                    "From": 443,
-                    "To": 443
-                },
-                "RuleAction": "allow",
-                "Egress": false,
-                "CidrBlock": "10.99.0.0/16"
-            }
-        },
-        "AppNACLEntryIngress130": {
-            "Type": "AWS::EC2::NetworkAclEntry",
-            "DependsOn": "AppNACL",
-            "Properties": {
-                "NetworkAclId": {
-                    "Ref": "AppNACL"
-                },
-                "RuleNumber": 130,
-                "Protocol": 6,
-                "PortRange": {
-                    "From": 1024,
-                    "To": 65535
-                },
-                "RuleAction": "allow",
-                "Egress": false,
-                "CidrBlock": "0.0.0.0/0"
-            }
-        },
-        "AppNACLEntryEgress110": {
-            "Type": "AWS::EC2::NetworkAclEntry",
-            "DependsOn": "AppNACL",
-            "Properties": {
-                "NetworkAclId": {
-                    "Ref": "AppNACL"
-                },
-                "RuleNumber": 110,
-                "Protocol": 6,
-                "PortRange": {
-                    "From": 80,
-                    "To": 80
-                },
-                "RuleAction": "allow",
-                "Egress": true,
-                "CidrBlock": "0.0.0.0/0"
-            }
-        },
-        "AppNACLEntryEgress120": {
-            "Type": "AWS::EC2::NetworkAclEntry",
-            "DependsOn": "AppNACL",
-            "Properties": {
-                "NetworkAclId": {
-                    "Ref": "AppNACL"
-                },
-                "RuleNumber": 120,
-                "Protocol": 6,
-                "PortRange": {
-                    "From": 443,
-                    "To": 443
-                },
-                "RuleAction": "allow",
-                "Egress": true,
-                "CidrBlock": "0.0.0.0/0"
-            }
-        },
-        "AppNACLEntryEgress130": {
-            "Type": "AWS::EC2::NetworkAclEntry",
-            "DependsOn": "AppNACL",
-            "Properties": {
-                "NetworkAclId": {
-                    "Ref": "AppNACL"
-                },
-                "RuleNumber": 130,
-                "Protocol": 6,
-                "PortRange": {
-                    "From": 1024,
-                    "To": 65535
-                },
-                "RuleAction": "allow",
-                "Egress": true,
-                "CidrBlock": "10.99.0.0/16"
-            }
-        },
         "DBNACL": {
             "Type": "AWS::EC2::NetworkAcl",
             "Properties": {
@@ -664,100 +259,6 @@
                         "Value": "DBNACL"
                     }
                 ]
-            }
-        },
-        "SubnetNetworkAclAssociationE": {
-            "Type": "AWS::EC2::SubnetNetworkAclAssociation",
-            "Properties": {
-                "SubnetId": {
-                    "Ref": "DBLayer1private"
-                },
-                "NetworkAclId": {
-                    "Ref": "DBNACL"
-                }
-            }
-        },
-        "SubnetNetworkAclAssociationF": {
-            "Type": "AWS::EC2::SubnetNetworkAclAssociation",
-            "Properties": {
-                "SubnetId": {
-                    "Ref": "DBLayer2private"
-                },
-                "NetworkAclId": {
-                    "Ref": "DBNACL"
-                }
-            }
-        },
-        "DBNACLEntryIngress100": {
-            "Type": "AWS::EC2::NetworkAclEntry",
-            "DependsOn": "DBNACL",
-            "Properties": {
-                "NetworkAclId": {
-                    "Ref": "DBNACL"
-                },
-                "RuleNumber": 100,
-                "Protocol": 6,
-                "PortRange": {
-                    "From": 3306,
-                    "To": 3306
-                },
-                "RuleAction": "allow",
-                "Egress": false,
-                "CidrBlock": "10.99.0.0/16"
-            }
-        },
-        "DBNACLEntryIngress110": {
-            "Type": "AWS::EC2::NetworkAclEntry",
-            "DependsOn": "DBNACL",
-            "Properties": {
-                "NetworkAclId": {
-                    "Ref": "DBNACL"
-                },
-                "RuleNumber": 110,
-                "Protocol": 6,
-                "PortRange": {
-                    "From": 1024,
-                    "To": 65535
-                },
-                "RuleAction": "allow",
-                "Egress": false,
-                "CidrBlock": "0.0.0.0/0"
-            }
-        },
-        "DBNACLEntryEgress100": {
-            "Type": "AWS::EC2::NetworkAclEntry",
-            "DependsOn": "DBNACL",
-            "Properties": {
-                "NetworkAclId": {
-                    "Ref": "DBNACL"
-                },
-                "RuleNumber": 100,
-                "Protocol": 6,
-                "PortRange": {
-                    "From": 3306,
-                    "To": 3306
-                },
-                "RuleAction": "allow",
-                "Egress": true,
-                "CidrBlock": "10.99.0.0/16"
-            }
-        },
-        "DBNACLEntryEgress110": {
-            "Type": "AWS::EC2::NetworkAclEntry",
-            "DependsOn": "DBNACL",
-            "Properties": {
-                "NetworkAclId": {
-                    "Ref": "DBNACL"
-                },
-                "RuleNumber": 110,
-                "Protocol": 6,
-                "PortRange": {
-                    "From": 1024,
-                    "To": 65535
-                },
-                "RuleAction": "allow",
-                "Egress": true,
-                "CidrBlock": "10.99.0.0/16"
             }
         },
         "LoadBalancer": {
@@ -884,14 +385,6 @@
                         "Key": "Name",
                         "Value": "BastionSG"
                     }
-                ],
-                "SecurityGroupIngress": [
-                    {
-                        "CidrIp": "0.0.0.0/0",
-                        "FromPort": 22,
-                        "IpProtocol": "tcp",
-                        "ToPort": 22
-                    }
                 ]
             }
         },
@@ -906,20 +399,6 @@
                     {
                         "Key": "Name",
                         "Value": "LoadBalancerSG"
-                    }
-                ],
-                "SecurityGroupIngress": [
-                    {
-                        "CidrIp": "0.0.0.0/0",
-                        "FromPort": 80,
-                        "IpProtocol": "tcp",
-                        "ToPort": 80
-                    },
-                    {
-                        "CidrIp": "0.0.0.0/0",
-                        "FromPort": 443,
-                        "IpProtocol": "tcp",
-                        "ToPort": 443
                     }
                 ]
             }
@@ -936,24 +415,6 @@
                         "Key": "Name",
                         "Value": "WebServerSG"
                     }
-                ],
-                "SecurityGroupIngress": [
-                    {
-                        "FromPort": 22,
-                        "IpProtocol": "tcp",
-                        "SourceSecurityGroupId": {
-                            "Ref": "BastionSecurityGroup"
-                        },
-                        "ToPort": 22
-                    },
-                    {
-                        "FromPort": 80,
-                        "IpProtocol": "tcp",
-                        "SourceSecurityGroupId": {
-                            "Ref": "LoadBalancerSecurityGroup"
-                        },
-                        "ToPort": 80
-                    }
                 ]
             }
         },
@@ -968,16 +429,6 @@
                     {
                         "Key": "Name",
                         "Value": "DatabaseSG"
-                    }
-                ],
-                "SecurityGroupIngress": [
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": 3306,
-                        "ToPort": 3306,
-                        "SourceSecurityGroupId": {
-                            "Ref": "WebServerSecurityGroup"
-                        }
                     }
                 ]
             }
