@@ -1,0 +1,18 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "autoscaling:*",
+                "ec2:*",
+                "elasticloadbalancing:*",
+                "rds:Describe*",
+                "rds:Get*",
+                "rds:List*",
+                "tag:GetResources"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
