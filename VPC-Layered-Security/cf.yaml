@@ -645,7 +645,6 @@ Resources:
       DBClusterIdentifier: !Ref "DatabaseCluster"
       DBInstanceClass: db.t2.medium
       DBSubnetGroupName: !Ref "DBSubnetGroup"
-      # VPCSecurityGroups: [{"Fn::GetAtt": ["DatabaseSecurityGroup", "GroupId"]}]
 
   DBSubnetGroup:
     Type: "AWS::RDS::DBSubnetGroup"
@@ -657,36 +656,32 @@ Resources:
 
   LaunchConfiguration:
     Type: "AWS::AutoScaling::LaunchConfiguration"
+    DependsOn: [DatabaseCluster, LoadBalancer]
     Properties:
-      # ImageId: {"Fn::FindInMap": ["EC2RegionMap", {"Ref": "AWS::Region"}, "AmazonLinuxAMIHVMEBSBacked64bit"]}
       ImageId: '%ami-43%'
-      InstanceType: t2.micro # {"Ref": "WebServerInstanceType"}
+      InstanceType: t2.micro
       IamInstanceProfile: !Ref WebInstanceProfile
       SecurityGroups: [!Ref WebServerSecurityGroup]
-      # KeyName: {"Ref": "WebServerKeyName"}
       AssociatePublicIpAddress: false
+
       UserData:
-        "Fn::Base64":
-          "Fn::Join":
-            - ""
-            - [
-                "#!/bin/bash\n",
-                "yum update -y\n",
-                "yum install -y httpd24 php70 mysql56-server php70-mysqlnd git\n",
-                "cd /var/www/html\n",
-                "git clone https://github.com/linuxacademy/content-aws-sysops-administrator.git\n",
-                "cd content-aws-sysops-administrator/wp-site/\n",
-                "mv * /var/www/html\n",
-                "groupadd www\n",
-                "usermod -a -G www ec2-user\n",
-                "chown -R root:www /var/www\n",
-                "chmod -R 2775 /var/www\n",
-                "echo '<?php phpinfo(); ?>' > /var/www/html/phpinfo.php\n",
-                "service httpd start\n",
-                "chkconfig httpd on\n",
-                "service mysqld start\n",
-                "chkconfig mysqld on\n"
-              ]
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd24 mysql php70 php70-mysqlnd
+          cd /var/www/html
+          wget -q -T 60 https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+          chmod +x wp-cli.phar
+          mv wp-cli.phar /usr/bin/wp
+          wp core download --allow-root --version=4.9.7
+          wp core config --dbname='wordpress' --dbuser='wpuser' --dbpass='Password1' --dbhost='${DatabaseCluster.Endpoint.Address}' --allow-root
+          wp db create --allow-root
+          wp core install --url='http://${LoadBalancer.DNSName}' --title='Linux Academy' --admin_user='wpuser' --admin_password='Password1' --admin_email='support@linuxacademy.com' --skip-email --allow-root
+          chown -R apache:apache /var/www/html
+          chmod u+wrx /var/www/html/wp-content/*
+          echo '<?php phpinfo(); ?>' > /var/www/html/phpinfo.php
+          service httpd start
+          chkconfig httpd on
       InstanceMonitoring: true
 
   AutoScalingGroup:
@@ -710,12 +705,10 @@ Resources:
   BastionLaunchConfig:
     Type: "AWS::AutoScaling::LaunchConfiguration"
     Properties:
-      #ImageId: {"Fn::FindInMap": ["EC2RegionMap", {"Ref": "AWS::Region"}, "AmazonLinuxAMIHVMEBSBacked64bit"]}
       ImageId: '%ami-43%'
       InstanceType: t2.micro # {"Ref": "WebServerInstanceType"}
       IamInstanceProfile: !Ref WebInstanceProfile
       SecurityGroups: [{"Ref": "BastionSecurityGroup"}]
-      # KeyName: {"Ref": "WebServerKeyName"}
       AssociatePublicIpAddress: true
       InstanceMonitoring: true
 
@@ -735,52 +728,7 @@ Resources:
           Value: "bastion-host"
           Key: "Name"
 
-  # myDNS:
-  #   Type: AWS::Route53::RecordSet
-  #   Properties:
-  #     HostedZoneName: sysopscodex.com.
-  #     Name: sysopscodex.com
-  #     Type: A
-  #     AliasTarget:
-  #       DNSName: !GetAtt LoadBalancer.DNSName
-  #       HostedZoneId: !GetAtt LoadBalancer.CanonicalHostedZoneID
+# To SSH into Wordpress instance:
 
-  # myDNSwww:
-  #   Type: AWS::Route53::RecordSet
-  #   Properties:
-  #     HostedZoneName: sysopscodex.com.
-  #     Name: www.sysopscodex.com
-  #     Type: A
-  #     AliasTarget:
-  #       DNSName: !GetAtt LoadBalancer.DNSName
-  #       HostedZoneId: !GetAtt LoadBalancer.CanonicalHostedZoneID
-
-  # DatabaseZone:
-  #   Type: "AWS::Route53::HostedZone"
-  #   Properties:
-  #     HostedZoneConfig:
-  #       Comment: "My private zone for RDS"
-  #     Name: "sysopsdatabase.com"
-  #     VPCs:
-  #       -
-  #         VPCId: !Ref VPC
-  #         VPCRegion: !Ref AWS::Region
-
-  # DBZone:
-  #   Type: AWS::Route53::RecordSet
-  #   Properties:
-  #     HostedZoneId: !Ref DatabaseZone
-  #     Name: database.sysopsdatabase.com
-  #     Type: CNAME
-  #     TTL: '900'
-  #     ResourceRecords:
-  #       - !GetAtt Database.Endpoint.Address
-
-
-# Outputs:
-#   pubIpAddress1:
-#     Description: Public IP address of Web Server
-#     Value: !GetAtt EC2Instance.PublicIp
-#   privIpAddress1:
-#     Description: Private IP address of Web Server
-#     Value: !GetAtt EC2Instance.PrivateIp
+# 1. SSH into bastion as cloud_user password 123456
+# 2. SSH into instance-wordpress password 123456

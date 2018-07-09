@@ -1030,6 +1030,10 @@
         },
         "LaunchConfiguration": {
             "Type": "AWS::AutoScaling::LaunchConfiguration",
+            "DependsOn": [
+                "DatabaseCluster",
+                "LoadBalancer"
+            ],
             "Properties": {
                 "ImageId": "%ami-43%",
                 "InstanceType": "t2.micro",
@@ -1044,27 +1048,7 @@
                 "AssociatePublicIpAddress": false,
                 "UserData": {
                     "Fn::Base64": {
-                        "Fn::Join": [
-                            "",
-                            [
-                                "#!/bin/bash\n",
-                                "yum update -y\n",
-                                "yum install -y httpd24 php70 mysql56-server php70-mysqlnd git\n",
-                                "cd /var/www/html\n",
-                                "git clone https://github.com/linuxacademy/content-aws-sysops-administrator.git\n",
-                                "cd content-aws-sysops-administrator/wp-site/\n",
-                                "mv * /var/www/html\n",
-                                "groupadd www\n",
-                                "usermod -a -G www ec2-user\n",
-                                "chown -R root:www /var/www\n",
-                                "chmod -R 2775 /var/www\n",
-                                "echo '<?php phpinfo(); ?>' > /var/www/html/phpinfo.php\n",
-                                "service httpd start\n",
-                                "chkconfig httpd on\n",
-                                "service mysqld start\n",
-                                "chkconfig mysqld on\n"
-                            ]
-                        ]
+                        "Fn::Sub": "#!/bin/bash\nyum update -y\nyum install -y httpd24 mysql php70 php70-mysqlnd\ncd /var/www/html\nwget -q -T 60 https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar\nchmod +x wp-cli.phar\nmv wp-cli.phar /usr/bin/wp\nwp core download --allow-root --version=4.9.7\nwp core config --dbname='wordpress' --dbuser='wpuser' --dbpass='Password1' --dbhost='${DatabaseCluster.Endpoint.Address}' --allow-root\nwp db create --allow-root\nwp core install --url='http://${LoadBalancer.DNSName}' --title='Linux Academy' --admin_user='wpuser' --admin_password='Password1' --admin_email='support@linuxacademy.com' --skip-email --allow-root\nchown -R apache:apache /var/www/html\nchmod u+wrx /var/www/html/wp-content/*\necho '<?php phpinfo(); ?>' > /var/www/html/phpinfo.php\nservice httpd start\nchkconfig httpd on\n"
                     }
                 },
                 "InstanceMonitoring": true
