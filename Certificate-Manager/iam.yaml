@@ -1,0 +1,18 @@
+Version: '2012-10-17'
+Statement:
+  - Effect: Allow
+    Action:
+      - acm:*
+      - autoscaling:*
+      - cloudwatch:*
+      - ec2:*
+      - elasticloadbalancing:*
+      - iam:DeleteServerCertificate
+      - iam:UploadServerCertificate
+      - iam:ListServerCertificates
+      - iam:GetServerCertificate
+      - logs:*
+      - route53:*
+      - route53domains:*
+      - tag:GetResources
+    Resource: '*'
